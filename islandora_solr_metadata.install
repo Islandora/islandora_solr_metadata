@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Implementations of installation hooks.
+ */
 
 /**
  * Implements hook_schema().
@@ -79,5 +83,3 @@ function islandora_solr_metadata_schema() {
   );
   return $schema;
 }
-
-

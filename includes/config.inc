@@ -1,11 +1,30 @@
 <?php
+/**
+ * @file
+ * Houses the form and utilities used in islandora_solr_metadata configurations.
+ */
 
+/**
+ * The configuration form for the islandora_solr_metadata module.
+ *
+ * @param array $form
+ *   An array representing a Drupal form.
+ * @param array $form_state
+ *   An array containing the Drupal form state.
+ * @param int $configuration_id
+ *   The ID of the configuration we are currently editing.
+ *
+ * @return array
+ *   An array representing the configuration form.
+ */
 function islandora_solr_metadata_config_form($form, $form_state, $configuration_id) {
   module_load_include('inc', 'islandora', 'includes/content_model.autocomplete');
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   $field_to_add = FALSE;
   $cmodel_to_add = FALSE;
   $data = array();
+
+  // AJAX callback handling.
   if (isset($form_state['triggering_element'])) {
     if ($form_state['triggering_element']['#name'] == 'islandora-solr-metadata-add-field') {
       $field_to_add = array(
@@ -57,7 +76,8 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
     '#prefix' => '<div id="islandora-solr-metadata-cmodels-wrapper">',
     '#suffix' => '</div>',
   );
-  // Form state + db shit.
+  // If there are values in the form_state use them for persistence in case of
+  // AJAX callbacks, otherwise grab fresh values from the database.
   if (isset($form_state['values'])) {
     if (isset($form_state['values']['islandora_solr_metadata_cmodels']['table_wrapper']['table'])) {
       $cmodels_associated = $form_state['complete form']['islandora_solr_metadata_cmodels']['table_wrapper']['table']['#options'];
@@ -68,7 +88,7 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
   }
 
   if ($cmodel_to_add !== FALSE) {
-     $cmodels_associated[$cmodel_to_add['cmodel']] = $cmodel_to_add;
+    $cmodels_associated[$cmodel_to_add['cmodel']] = $cmodel_to_add;
   }
 
   $form['islandora_solr_metadata_cmodels']['table_wrapper']['table'] = array(
@@ -80,7 +100,6 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
     '#empty' => t('No content models associated.'),
   );
 
-  // Some check if anything is in the table...
   if (count($cmodels_associated)) {
     $form['islandora_solr_metadata_cmodels']['table_wrapper']['remove_selected'] = array(
       '#type' => 'button',
@@ -98,6 +117,8 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
     '#collapsed' => TRUE,
     '#collapsible' => FALSE,
   );
+  // Retrieve all content models and unset those currently in use in this
+  // configuration and any others from other configurations.
   $add_options = islandora_get_content_model_names();
   foreach ($cmodels_associated as $entry) {
     unset($add_options[$entry['cmodel']]);
@@ -126,6 +147,8 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
     '#collapsed' => TRUE,
     '#collapsible' => FALSE,
   );
+  // If there are values in the form_state use them for persistence in case of
+  // AJAX callbacks, otherwise grab fresh values from the database.
   if (isset($form_state['values'])) {
     if (isset($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table'])) {
       $data = $form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows'];
@@ -190,6 +213,14 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
   return $form;
 }
 
+/**
+ * Validation for the islandora_solr_metadata configuration form.
+ *
+ * @param array $form
+ *   An array representing a Drupal form.
+ * @param array $form_state
+ *   An array containing the Drupal form state.
+ */
 function islandora_solr_metadata_config_form_validate($form, $form_state) {
   if ($form_state['triggering_element']['#name'] == 'islandora-solr-metadata-add-field') {
     module_load_include('inc', 'islandora_solr_search', 'includes/luke');
@@ -235,17 +266,24 @@ function islandora_solr_metadata_config_form_validate($form, $form_state) {
       form_set_error('islandora_solr_metadata', t('Must select at least one entry to remove!'));
     }
   }
-
 }
 
+/**
+ * Submit handler for the islandora_solr_metadata configuration form.
+ *
+ * @param array $form
+ *   An array representing a Drupal form.
+ * @param array $form_state
+ *   An array containing the Drupal form state.
+ */
 function islandora_solr_metadata_config_form_submit($form, $form_state) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   $configuration_id = $form_state['values']['islandora_solr_metadata_configuration_id'];
-  
+
   if ($form_state['clicked_button']['#value'] == 'Save configuration') {
     // Grab existing entries first for comparison.
     $fields_db = islandora_solr_metadata_get_fields($configuration_id);
-    if (isset($form_state['values']['islandora_solr_metadata_fields']['table'])) {
+    if (isset($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table'])) {
       $fields_fs = $form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows'];
     }
     else {
@@ -260,14 +298,14 @@ function islandora_solr_metadata_config_form_submit($form, $form_state) {
 
     // Handle insertion and deletion of content models first.
     if (count($cmodels_insertion)) {
-    $query = db_insert('islandora_solr_metadata_cmodels')
-      ->fields(array('configuration_id', 'cmodel'));
-       foreach ($cmodels_insertion as $row) {
-         $query->values(array(
-           'configuration_id' => $configuration_id,
-           'cmodel' => $row['cmodel'],
-         ));
-       }
+      $query = db_insert('islandora_solr_metadata_cmodels')
+        ->fields(array('configuration_id', 'cmodel'));
+      foreach ($cmodels_insertion as $row) {
+        $query->values(array(
+         'configuration_id' => $configuration_id,
+         'cmodel' => $row['cmodel'],
+        ));
+      }
       $query->execute();
     }
     if (count($cmodels_deletion)) {
@@ -279,6 +317,7 @@ function islandora_solr_metadata_config_form_submit($form, $form_state) {
 
     $fields_deletion = array_diff_key($fields_db, $fields_fs);
     $fields_insertion = array_diff_key($fields_fs, $fields_db);
+
     if (count($fields_insertion)) {
       $query = db_insert('islandora_solr_metadata_fields')
         ->fields(array(
@@ -288,6 +327,7 @@ function islandora_solr_metadata_config_form_submit($form, $form_state) {
           'weight',
         )
       );
+
       foreach ($fields_insertion as $row) {
         $query->values(array(
           'configuration_id' => $configuration_id,
@@ -304,8 +344,6 @@ function islandora_solr_metadata_config_form_submit($form, $form_state) {
         ->condition('configuration_id', $configuration_id)
         ->execute();
     }
-
-
 
     $fields_update = array_intersect_key($fields_fs, $fields_db);
     foreach ($fields_update as $row) {
@@ -325,14 +363,45 @@ function islandora_solr_metadata_config_form_submit($form, $form_state) {
   }
 }
 
+/**
+ * AJAX callback for the fields portion of the configuration form.
+ *
+ * @param array $form
+ *   An array representing a Drupal form.
+ * @param array $form_state
+ *   An array representing the Drupal form state.
+ *
+ * @return array
+ *   An array representing the portion of the form we are rendering.
+ */
 function islandora_solr_metadata_fields_ajax(&$form, &$form_state) {
   return $form['islandora_solr_metadata_fields']['table_wrapper'];
 }
 
+/**
+ * AJAX callback for the content models portion of the configuration form.
+ *
+ * @param array $form
+ *   An array representing a Drupal form.
+ * @param array $form_state
+ *   An array representing the Drupal form state.
+ *
+ * @return array
+ *   An array representing the portion of the form we are rendering.
+ */
 function islandora_solr_metadata_cmodels_ajax(&$form, &$form_state) {
   return $form['islandora_solr_metadata_cmodels']['table_wrapper'];
 }
 
+/**
+ * Helper function to construct the fields tableselect.
+ *
+ * @param array $data
+ *   An array of data representing rows to be rendered in the tableselect.
+ *
+ * @return array
+ *   An array representing the tableselect to be rendered.
+ */
 function islandora_solr_metadata_management($data) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   $form = array();
@@ -348,7 +417,7 @@ function islandora_solr_metadata_management($data) {
       return array(
         'remove_field' => array(
           '#type' => 'checkbox',
-          '#default_value' => isset($field['remove']) ? $field['remove']: FALSE,
+          '#default_value' => isset($field['remove']) ? $field['remove'] : FALSE,
         ),
         'solr_field_markup' => array('#markup' => filter_xss($field['solr_field'])),
         'display_label' => array(

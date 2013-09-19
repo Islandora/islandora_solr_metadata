@@ -1,6 +1,21 @@
 <?php
+/**
+ * @file
+ * The main administrative form for islandora_solr_metadata.
+ */
 
-function islandora_solr_metadata_admin_form(array $form, array &$form_state) {
+/**
+ * The main administrative overview for the islandora_solr_metadata module.
+ *
+ * @param array $form
+ *   An array representing a Drupal form.
+ * @param array $form_state
+ *   An array containing the Drupal form state.
+ *
+ * @return array
+ *   An array representing the administration form.
+ */
+function islandora_solr_metadata_admin_form($form, &$form_state) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   $associations = islandora_solr_metadata_get_associations();
   $form = array();
@@ -11,7 +26,7 @@ function islandora_solr_metadata_admin_form(array $form, array &$form_state) {
       l($association['name'], "admin/islandora/search/islandora_solr_metadata/config/{$association['id']}"),
       empty($cmodels) ? t('No content models currently associated') : theme('item_list', array(
         'items' => array_keys($cmodels),
-      ))
+      )),
     );
   }
   $form['table'] = array(
@@ -23,7 +38,7 @@ function islandora_solr_metadata_admin_form(array $form, array &$form_state) {
       ),
       'rows' => $rows,
       'empty' => t('No associations currently present.'),
-    ))
+    )),
   );
   $form['add_configuration'] = array(
     '#type' => 'fieldset',
@@ -44,12 +59,28 @@ function islandora_solr_metadata_admin_form(array $form, array &$form_state) {
   return $form;
 }
 
+/**
+ * Validation for the islandora_solr_metadata administration form.
+ *
+ * @param array $form
+ *   An array representing a Drupal form.
+ * @param array $form_state
+ *   An array containing the Drupal form state.
+ */
 function islandora_solr_metadata_admin_form_validate($form, $form_state) {
   if (empty($form_state['values']['configuration_name'])) {
     form_set_error('configuration_name', t('Please enter a non-empty configuration name!'));
   }
 }
 
+/**
+ * Submit handler for the islandora_solr_metadata administration form.
+ *
+ * @param array $form
+ *   An array representing a Drupal form.
+ * @param array $form_state
+ *   An array containing the Drupal form state.
+ */
 function islandora_solr_metadata_admin_form_submit($form, $form_state) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   islandora_solr_metadata_add_configuration($form_state['values']['configuration_name']);

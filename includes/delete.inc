@@ -1,5 +1,22 @@
 <?php
+/**
+ * @file
+ * Houses the confirm_form for the islandora_solr_metadata configuration form.
+ */
 
+/**
+ * The delete confirm_form for the islandora_solr_metadata module.
+ *
+ * @param array $form
+ *   An array representing a Drupal form.
+ * @param array $form_state
+ *   An array containing the Drupal form state.
+ * @param int $configuration_id
+ *   The ID of the configuration we are currently editing.
+ *
+ * @return array
+ *   An array representing the configuration form.
+ */
 function islandora_solr_metadata_delete_config_form($form, &$form_state, $configuration_id) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   $form_state['configuration_id'] = $configuration_id;
@@ -14,6 +31,14 @@ function islandora_solr_metadata_delete_config_form($form, &$form_state, $config
   );
 }
 
+/**
+ * Submit handler for the islandora_solr_metadata delete confirm_form.
+ *
+ * @param array $form
+ *   An array representing a Drupal form.
+ * @param array $form_state
+ *   An array containing the Drupal form state.
+ */
 function islandora_solr_metadata_delete_config_form_submit($form, &$form_state) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   islandora_solr_metadata_delete_configuration($form_state['configuration_id']);

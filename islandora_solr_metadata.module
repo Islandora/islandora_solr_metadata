@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * The main module file for the islandora_solr_metadata module.
+ */
 
 /**
  * Implements hook_menu().
@@ -43,6 +47,17 @@ function islandora_solr_metadata_theme() {
       'render element' => 'table',
       'file' => 'theme/theme.inc',
     ),
+    'islandora_solr_metadata_display' => array(
+      'template' => 'theme/islandora-solr-metadata-display',
+      // We can add PIDs to the end of this pattern in our preprocess function
+      // and templates will be able to have have a pid appended to the
+      // template name to overide a template on a per object basis.
+      // An example template might be named:
+      // "islandora-solr-metadata-display--islandora-27.tpl.php".
+      'pattern' => 'islandora_solr_metadata_display__',
+      'variables' => array('islandora_object' => NULL),
+      'file' => 'theme/theme.inc',
+    ),
   );
 }
 
@@ -57,6 +72,15 @@ function islandora_solr_metadata_permission() {
   );
 }
 
+/**
+ * Access callback for accessing a configuration based upon ID.
+ *
+ * @param int $configuration_id
+ *   The configuration ID of the list we are accessing.
+ *
+ * @return bool
+ *   TRUE if the user has permission and the list exists, FALSE otherwise.
+ */
 function islandora_solr_metadata_access($configuration_id) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   return islandora_solr_metadata_configuration_exists($configuration_id) && user_access('administer islandora_solr_metadata');
@@ -67,6 +91,7 @@ function islandora_solr_metadata_access($configuration_id) {
  *
  * @param int $configuration_id
  *   The ID of the configuration we are retrieving the name of.
+ *
  * @return string
  *   The name of the configuration that is to be edited.
  */
@@ -77,8 +102,8 @@ function islandora_solr_metadata_display_configuration_name($configuration_id) {
 }
 
 /**
-* Implements hook_i18n_string_info().
-*/
+ * Implements hook_i18n_string_info().
+ */
 function islandora_solr_metadata_i18n_string_info() {
   return array(
     'islandora_solr_metadata' => array(
@@ -88,4 +113,34 @@ function islandora_solr_metadata_i18n_string_info() {
       'list' => TRUE,
     ),
   );
+}
+
+/**
+ * Implements hook_islandora_metadata_display_info().
+ */
+function islandora_solr_metadata_islandora_metadata_display_info() {
+  return array(
+    'islandora_solr_metadata' => array(
+      'label' => t('Islandora Solr Metadata'),
+      'description' => t('Metadata display driven by the Islandora Solr Search module'),
+      'callback' => 'islandora_solr_metadata_display_callback',
+      'configuration' => 'admin/islandora/search/islandora_solr/metadata',
+    ),
+  );
+}
+
+/**
+ * Metadata display callback for rendering metadata from Solr.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ *
+ * @return string
+ *   Markup representing the metadata display pulled from Solr.
+ */
+function islandora_solr_metadata_display_callback(AbstractObject $object) {
+  $elements = array(
+    'islandora_object' => $object,
+  );
+  return theme('islandora_solr_metadata_display', $elements);
 }

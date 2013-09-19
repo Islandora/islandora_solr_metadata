@@ -60,11 +60,28 @@ function islandora_solr_metadata_get_associations() {
     }
 
     $associations[] = array(
-      'name' => $record->configuration_name,
+      'name' => $config_name,
       'id' => $record->configuration_id,
     );
   }
   return $associations;
+}
+
+/**
+ * Get all display configurations based upon an object's content models.
+ *
+ * @param array $cmodels
+ *   An array containing content models of the object we are retrieving from.
+ *
+ * @return array
+ *   An array of strings, representing display configuration IDs.
+ */
+function islandora_solr_metadata_get_associations_by_cmodels(array $cmodels) {
+  return db_select('islandora_solr_metadata_cmodels', 'i')
+    ->fields('i', array('configuration_id'))
+    ->condition('cmodel', $cmodels)
+    ->execute()
+    ->fetchCol();
 }
 
 /**
@@ -90,7 +107,7 @@ function islandora_solr_metadata_get_cmodels($configuration_id) {
  *   An array of strings, representing content model PIDs.
  */
 function islandora_solr_metadata_get_all_associated_cmodels() {
-  $result = db_query ('SELECT DISTINCT cmodel FROM {islandora_solr_metadata_cmodels}');
+  $result = db_query('SELECT DISTINCT cmodel FROM {islandora_solr_metadata_cmodels}');
   return $result->fetchCol();
 }
 
@@ -104,8 +121,8 @@ function islandora_solr_metadata_get_all_associated_cmodels() {
  *   The ID with which the configuration was created in the database.
  */
 function islandora_solr_metadata_add_configuration($configuration_name) {
-  $id = db_insert('islandora_solr_metadata_associations')->
-    fields(
+  $id = db_insert('islandora_solr_metadata_associations')
+    ->fields(
       array(
         'configuration_name' => $configuration_name,
       )
@@ -114,7 +131,7 @@ function islandora_solr_metadata_add_configuration($configuration_name) {
 
   if (module_exists('i18n_string')) {
     $i18n_id = islandora_solr_metadata_config_i18n_id($id);
-    i18n_string_update($i18n_id, $config_name);
+    i18n_string_update($i18n_id, $configuration_name);
   }
 
   return $id;
@@ -184,7 +201,7 @@ function islandora_solr_metadata_retrieve_configuration_name($configuration_id) 
  */
 function islandora_solr_metadata_delete_configuration($configuration_id) {
   if (module_exists('i18n_string')) {
-    $fields = islandora_solr_metadata_get_fields($configuration_id, $translate);
+    $fields = islandora_solr_metadata_get_fields($configuration_id, FALSE);
     foreach (array_keys($fields) as $field) {
       $i18n_id = islandora_solr_metadata_field_i18n_id($configuration_id, $field);
       i18n_string_remove($i18n_id);
@@ -199,7 +216,7 @@ function islandora_solr_metadata_delete_configuration($configuration_id) {
     ->execute();
 
   if (module_exists('i18n_string')) {
-    $i18n_id = islandora_solr_metadata_config_i18n_id($id);
+    $i18n_id = islandora_solr_metadata_config_i18n_id($configuration_id);
     i18n_string_remove($i18n_id);
   }
   db_delete('islandora_solr_metadata_associations')
@@ -220,4 +237,3 @@ function islandora_solr_metadata_configuration_exists($configuration_id) {
   $result = db_query('SELECT COUNT(*) FROM {islandora_solr_metadata_associations} WHERE configuration_id = :configuration_id', array(':configuration_id' => $configuration_id));
   return intval($result->fetchField()) > 0;
 }
-

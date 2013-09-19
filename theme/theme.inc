@@ -1,10 +1,7 @@
 <?php
-
 /**
  * @file
- * theme/theme.inc
- *
- * Theme functions.
+ * Theme functions for the islandora_solr_metadata module.
  */
 
 /**
@@ -36,4 +33,51 @@ function theme_islandora_solr_metadata_management_table(array $variables) {
   $output .= drupal_render_children($table);
   drupal_add_tabledrag($table_id, 'order', 'sibling', $weight_class);
   return $output;
+}
+
+/**
+ * Implements hook_preprocess().
+ */
+function islandora_solr_metadata_preprocess_islandora_solr_metadata_display(array &$variables) {
+  module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
+  $object = $variables['islandora_object'];
+  $db_fields = array();
+  $solr_fields = array();
+  $render_metadata = array();
+
+  $associations = islandora_solr_metadata_get_associations_by_cmodels($object->models);
+  foreach ($associations as $configuration_id) {
+    $field = islandora_solr_metadata_get_fields($configuration_id);
+    $db_fields = array_merge($solr_fields, $field);
+  }
+  if (count($db_fields)) {
+    uasort($db_fields, 'drupal_sort_weight');
+    foreach ($db_fields as $key => $value) {
+      if (!in_array($value, $solr_fields)) {
+        $solr_fields[] = $value['solr_field'];
+        // Make an array for use later on.
+        $render_metadata[$key] = array(
+          'display_label' => $value['display_label'],
+        );
+      }
+    }
+    $query_processor = new IslandoraSolrQueryProcessor();
+    $query_processor->solrQuery = 'PID:"' . $object->id . '"';
+    $query_processor->solrParams['fl'] = implode(', ', $solr_fields);
+    $query_processor->executeQuery(FALSE);
+    if (count($query_processor->islandoraSolrResult['response']['numFound']) > 0) {
+      $solr_results_doc = $query_processor->islandoraSolrResult['response']['objects']['0']['solr_doc'];
+      foreach ($solr_results_doc as $solr_field => $value) {
+        // Want the values in array form even if it's a single valued field.
+        if (!is_array($value)) {
+          $value = (array) $value;
+        }
+        $render_metadata[$solr_field]['value'] = $value;
+      }
+    }
+    else {
+      drupal_set_message(t('Unable to find @pid object in the Solr index. Contact the administrator!', array('@pid' => $object->id)), 'error');
+    }
+    $variables['solr_fields'] = $render_metadata;
+  }
 }
