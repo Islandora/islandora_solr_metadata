@@ -75,3 +75,17 @@ function islandora_solr_metadata_display_configuration_name($configuration_id) {
   $configuration_name = islandora_solr_metadata_retrieve_configuration_name($configuration_id);
   return format_string('@configuration_name display configuration', array('@configuration_name' => $configuration_name));
 }
+
+/**
+* Implements hook_i18n_string_info().
+*/
+function islandora_solr_metadata_i18n_string_info() {
+  return array(
+    'islandora_solr_metadata' => array(
+      'title' => t('Islandora Solr Metadata'),
+      'description' => t('Translatable configuration names and display labels.'),
+      'format' => FALSE,
+      'list' => TRUE,
+    ),
+  );
+}
