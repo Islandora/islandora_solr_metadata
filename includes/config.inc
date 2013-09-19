@@ -241,15 +241,19 @@ function islandora_solr_metadata_config_form_validate($form, $form_state) {
 function islandora_solr_metadata_config_form_submit($form, $form_state) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   $configuration_id = $form_state['values']['islandora_solr_metadata_configuration_id'];
+  
   if ($form_state['clicked_button']['#value'] == 'Save configuration') {
     // Grab existing entries first for comparison.
     $fields_db = islandora_solr_metadata_get_fields($configuration_id);
-    $fields_fs = $form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows'];
+    if (isset($form_state['values']['islandora_solr_metadata_fields']['table'])) {
+      $fields_fs = $form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows'];
+    }
+    else {
+      $fields_fs = array();
+    }
 
     $cmodels_db = islandora_solr_metadata_get_cmodels($configuration_id);
     $cmodels_fs = $form_state['complete form']['islandora_solr_metadata_cmodels']['table_wrapper']['table']['#options'];
-    dsm($fields_db, 'fields db');
-    dsm($fields_fs, 'fields fs');
 
     $cmodels_deletion = array_diff_key($cmodels_db, $cmodels_fs);
     $cmodels_insertion = array_diff_key($cmodels_fs, $cmodels_db);
