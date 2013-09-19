@@ -19,6 +19,13 @@ function islandora_solr_metadata_schema() {
         'length' => 255,
         'not null' => TRUE,
       ),
+      'delimeter' => array(
+        'description' => 'The delimeter for displaying multi valued fields',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '<br/>',
+      ),
     ),
     'primary key' => array('configuration_id'),
   );

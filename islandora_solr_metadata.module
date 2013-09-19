@@ -11,16 +11,25 @@ function islandora_solr_metadata_menu() {
     'weight' => 5,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_solr_metadata_admin_form'),
-    'access callback' => TRUE,
-    'file' => 'includes/admin.inc'
+    'access arguments' => array('administer islandora_solr_metadata'),
+    'file' => 'includes/admin.inc',
   );
   $items['admin/islandora/search/islandora_solr_metadata/config/%'] = array(
     'title callback' => 'islandora_solr_metadata_display_configuration_name',
     'title arguments' => array(5),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_solr_metadata_config_form', 5),
-    'access callback' => TRUE,
-    'file' => 'includes/config.inc'
+    'access callback' => 'islandora_solr_metadata_access',
+    'access arguments' => array(5),
+    'file' => 'includes/config.inc',
+  );
+  $items['admin/islandora/search/islandora_solr_metadata/config/delete/%'] = array(
+    'title' => 'Delete display configuration',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_solr_metadata_delete_config_form', 6),
+    'access callback' => 'islandora_solr_metadata_access',
+    'access arguments' => array(6),
+    'file' => 'includes/delete.inc',
   );
   return $items;
 }
@@ -35,6 +44,22 @@ function islandora_solr_metadata_theme() {
       'file' => 'theme/theme.inc',
     ),
   );
+}
+
+/**
+ * Implements hook_permission().
+ */
+function islandora_solr_metadata_permission() {
+  return array(
+    'administer islandora_solr_metadata' => array(
+      'title' => 'Create and manage metadata display configurations',
+    ),
+  );
+}
+
+function islandora_solr_metadata_access($configuration_id) {
+  module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
+  return islandora_solr_metadata_configuration_exists($configuration_id) && user_access('administer islandora_solr_metadata');
 }
 
 /**

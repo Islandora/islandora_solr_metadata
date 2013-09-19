@@ -47,21 +47,20 @@ function islandora_solr_metadata_retrieve_configuration_name($configuration_id) 
   return $result->fetchColumn();
 }
 
-function islandora_solr_metadata_delete_association($configuration_id) {
-
+function islandora_solr_metadata_delete_configuration($configuration_id) {
+  db_delete('islandora_solr_metadata_fields')
+    ->condition('configuration_id', $configuration_id)
+    ->execute();
+  db_delete('islandora_solr_metadata_cmodels')
+    ->condition('configuration_id', $configuration_id)
+    ->execute();
+  db_delete('islandora_solr_metadata_associations')
+    ->condition('configuration_id', $configuration_id)
+    ->execute();
 }
 
-function islandora_solr_metadata_delete_fields($configuration_id) {
-  dsm($configuration_id, 'config id');
-  db_delete('islandora_solr_metadata_fields')->condition('configuration_id', $configuration_id)->execute();
+function islandora_solr_metadata_configuration_exists($configuration_id) {
+  $result = db_query('SELECT configuration_id FROM {islandora_solr_metadata_associations} WHERE configuration_id = :configuration_id', array(':configuration_id' => $configuration_id));
+  return $result->rowCount();
 }
 
-function islandora_solr_metadata_add_field($row) {
-  $fields = array(
-    'configuration_id' => $row['configuration_id'],
-    'solr_field' => $row['solr_field'],
-    'display_label' => $row['display_label'],
-    'weight' => $row['weight'],
-  );
-  db_insert('islandora_solr_metadata_fields')->fields($fields)->execute();
-}
