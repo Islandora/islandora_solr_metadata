@@ -23,12 +23,23 @@ function islandora_solr_metadata_schema() {
         'length' => 255,
         'not null' => TRUE,
       ),
-      'delimeter' => array(
-        'description' => 'The delimeter for displaying multi valued fields',
+      'description_field' => array(
         'type' => 'varchar',
-        'length' => '255',
+        'length' => 255,
+        'default' => NULL,
+        'description' => 'The field name as indexed in Solr to be used for displaying description metadata',
+      ),
+      'description_label' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => 'The label for the description metadata',
+        'default' => NULL,
+      ),
+      'machine_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => 'The machine readable name for this association',
         'not null' => TRUE,
-        'default' => '<br/>',
       ),
     ),
     'primary key' => array('configuration_id'),

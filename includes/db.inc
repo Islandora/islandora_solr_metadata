@@ -41,6 +41,24 @@ function islandora_solr_metadata_field_i18n_id($config_id, $field_name) {
 }
 
 /**
+ * Build up the key for the description label.
+ *
+ * @param int $config_id
+ *   The ID of the configuration with which the given field is associated.
+ * @param string $description_label
+ *   The description label to be translated.
+ *
+ * @return string
+ *   A colon-separated string as used by the
+ *   i18n_string_{update,remove,translate} functions.
+ */
+function islandora_solr_metadata_description_i18n_id($config_id) {
+  return format_string('islandora_solr_metadata:description_label:@id', array(
+    '@id' => $config_id,
+  ));
+}
+
+/**
  * Get all configurations available.
  *
  * @return array
@@ -51,7 +69,7 @@ function islandora_solr_metadata_field_i18n_id($config_id, $field_name) {
  */
 function islandora_solr_metadata_get_associations() {
   $associations = array();
-  $result = db_query('SELECT configuration_id, configuration_name FROM {islandora_solr_metadata_associations}');
+  $result = db_query('SELECT configuration_id, configuration_name, machine_name FROM {islandora_solr_metadata_associations}');
   foreach ($result as $record) {
     $config_name = $record->configuration_name;
     if (module_exists('i18n_string')) {
@@ -62,6 +80,7 @@ function islandora_solr_metadata_get_associations() {
     $associations[] = array(
       'name' => $config_name,
       'id' => $record->configuration_id,
+      'machine_name' => $record->machine_name,
     );
   }
   return $associations;
@@ -81,7 +100,7 @@ function islandora_solr_metadata_get_associations_by_cmodels(array $cmodels) {
     ->fields('i', array('configuration_id'))
     ->condition('cmodel', $cmodels)
     ->execute()
-    ->fetchCol();
+    ->fetchAllAssoc('configuration_id', PDO::FETCH_ASSOC);
 }
 
 /**
@@ -93,7 +112,7 @@ function islandora_solr_metadata_get_associations_by_cmodels(array $cmodels) {
  * @return array
  *   An associative array mapping content model PIDs to an associative array
  *   containing:
- *   - cmodel: The PID, again... Blame Jordan. :P
+ *   - cmodel: The PID.
  */
 function islandora_solr_metadata_get_cmodels($configuration_id) {
   $result = db_query('SELECT cmodel FROM {islandora_solr_metadata_cmodels} WHERE configuration_id = :configuration_id', array(':configuration_id' => $configuration_id));
@@ -116,15 +135,18 @@ function islandora_solr_metadata_get_all_associated_cmodels() {
  *
  * @param string $configuration_name
  *   The name of a configuration to add the the DB.
+ * @param string $machine_name
+ *   The unique machine name to add the the DB.
  *
  * @return int
  *   The ID with which the configuration was created in the database.
  */
-function islandora_solr_metadata_add_configuration($configuration_name) {
+function islandora_solr_metadata_add_configuration($configuration_name, $machine_name) {
   $id = db_insert('islandora_solr_metadata_associations')
     ->fields(
       array(
         'configuration_name' => $configuration_name,
+        'machine_name' => $machine_name,
       )
     )
     ->execute();
@@ -167,7 +189,6 @@ function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE
     // XXX: foreach with references can be silly.
     unset($field_info);
   }
-
   return $fields;
 }
 
@@ -194,6 +215,21 @@ function islandora_solr_metadata_retrieve_configuration_name($configuration_id) 
 }
 
 /**
+ * Get the ID for the given configuration.
+ *
+ * @param string $machine_name
+ *   The machine name of the configuration ID we are grabbing.
+ *
+ * @return bool|int
+ *   The configuration ID if it exists; otherwise, FALSE.
+ */
+function islandora_solr_metadata_retrieve_configuration_from_machine_name($machine_name) {
+  $result = db_query('SELECT configuration_id from {islandora_solr_metadata_associations} WHERE machine_name = :machine_name', array(':machine_name' => $machine_name));
+  $config_id = $result->fetchColumn();
+  return $config_id;
+}
+
+/**
  * Delete the given configuration indicated by the given ID.
  *
  * @param int $configuration_id
@@ -217,8 +253,11 @@ function islandora_solr_metadata_delete_configuration($configuration_id) {
 
   if (module_exists('i18n_string')) {
     $i18n_id = islandora_solr_metadata_config_i18n_id($configuration_id);
+    $i18n_description_id = islandora_solr_metadata_description_i18n_id($configuration_id);
     i18n_string_remove($i18n_id);
+    i18n_string_remove($i18n_description_id);
   }
+
   db_delete('islandora_solr_metadata_associations')
     ->condition('configuration_id', $configuration_id)
     ->execute();
@@ -236,4 +275,244 @@ function islandora_solr_metadata_delete_configuration($configuration_id) {
 function islandora_solr_metadata_configuration_exists($configuration_id) {
   $result = db_query('SELECT COUNT(*) FROM {islandora_solr_metadata_associations} WHERE configuration_id = :configuration_id', array(':configuration_id' => $configuration_id));
   return intval($result->fetchField()) > 0;
+}
+
+/**
+ * Add content models to a specified configuration ID.
+ *
+ * @param int $configuration_id
+ *   The configuration ID of the configuration which to add to.
+ * @param array $content_models
+ *   An associative array mapping content model PIDs to an associative array
+ *   containing:
+ *   - cmodel: The PID.
+ */
+function islandora_solr_metadata_add_content_models($configuration_id, $content_models) {
+  $query = db_insert('islandora_solr_metadata_cmodels')
+     ->fields(array('configuration_id', 'cmodel'));
+  foreach ($content_models as $content_model) {
+    $query->values(array(
+      'configuration_id' => $configuration_id,
+      'cmodel' => $content_model['cmodel'],
+    ));
+  }
+  $query->execute();
+}
+
+/**
+ * Delete content models from a specified configuration ID.
+ *
+ * @param int $configuration_id
+ *   The configuration ID of the configuration which to add to.
+ * @param array $content_models
+ *   An associative array mapping content model PIDs to an associative array
+ *   containing:
+ *   - cmodel: The PID.
+ */
+function islandora_solr_metadata_delete_content_models($configuration_id, $content_models) {
+  db_delete('islandora_solr_metadata_cmodels')
+    ->condition('cmodel', array_keys($content_models))
+    ->condition('configuration_id', $configuration_id)
+    ->execute();
+}
+
+/**
+ * Add fields to a specified configuration ID.
+ *
+ * @param int $configuration_id
+ *   The configuration ID of the configuration which to add to.
+ * @param array $fields
+ *   An associative array of associative arrays, containing details about the
+ *   given field being added, including:
+ *   - configuration_id
+ *   - display_label
+ *   - weight
+ *   - solr_field
+ */
+function islandora_solr_metadata_add_fields($configuration_id, $fields) {
+  $query = db_insert('islandora_solr_metadata_fields')
+    ->fields(array(
+        'configuration_id',
+        'solr_field',
+        'display_label',
+        'weight',
+      )
+    );
+
+  foreach ($fields as $field) {
+    $query->values(array(
+      'configuration_id' => $configuration_id,
+      'solr_field' => $field['solr_field'],
+      'display_label' => $field['display_label'],
+      'weight' => $field['weight'],
+    ));
+  }
+  $query->execute();
+  islandora_solr_metadata_update_i18n_strings($configuration_id, $fields);
+}
+
+/**
+ * Delete fields from a configuration given configuration ID.
+ *
+ * @param int $configuration_id
+ *   The configuration ID of the configuration which to add to.
+ * @param array $fields
+ *   An associative array of associative arrays, representing Solr fields
+ *   mapped to the details about the given field, including:
+ *   - configuration_id
+ *   - display_label
+ *   - weight
+ *   - solr_field
+ */
+function islandora_solr_metadata_delete_fields($configuration_id, $fields) {
+  db_delete('islandora_solr_metadata_fields')
+    ->condition('solr_field', array_keys($fields))
+    ->condition('configuration_id', $configuration_id)
+    ->execute();
+  islandora_solr_metadata_remove_i18n_strings($configuration_id, $fields);
+}
+
+/**
+ * Updates existing fields in a configuration given configuration ID.
+ *
+ * @param int $configuration_id
+ *   The configuration ID of the configuration which to add to.
+ * @param array $fields
+ *   An associative array of associative arrays, representing Solr fields
+ *   mapped to the details about the given field, including:
+ *   - configuration_id
+ *   - display_label
+ *   - weight
+ *   - solr_field
+ */
+function islandora_solr_metadata_update_fields($configuration_id, $fields) {
+  foreach ($fields as $field) {
+    db_update('islandora_solr_metadata_fields')
+      ->fields(array(
+        'weight' => $field['weight'],
+        'display_label' => $field['display_label'],
+      ))
+      ->condition('solr_field', $field['solr_field'])
+      ->condition('configuration_id', $configuration_id)
+      ->execute();
+  }
+  islandora_solr_metadata_update_i18n_strings($configuration_id, $fields);
+}
+
+/**
+ * Updates existing fields in a configuration given configuration ID.
+ *
+ * @param int $configuration_id
+ *   The configuration ID of the configuration which to add to.
+ *
+ * @return array
+ *   Some shit.
+ */
+function islandora_solr_metadata_retrieve_description($configuration_id, $translate = TRUE) {
+  $result = db_query('SELECT description_field, description_label FROM {islandora_solr_metadata_associations} WHERE configuration_id = :configuration_id', array(':configuration_id' => $configuration_id));
+  $description = $result->fetchAssoc();
+  if ($translate && module_exists('i18n_string')) {
+    $i18n_id = islandora_solr_metadata_description_i18n_id($configuration_id);
+    $description['description_label'] = i18n_string_translate($i18n_id, $description['description_label']);
+  }
+  return $description;
+}
+
+/**
+ * Updates the description field and label in the database.
+ *
+ * @param int $configuration_id
+ *   The configuration ID of the configuration which to update.
+ * @param string $description_field
+ *   The Solr field which we are grabbing the description value from.
+ * @param string $description_label
+ *   The label for the description metadata.
+ */
+function islandora_solr_metadata_update_description($configuration_id, $description_field, $description_label) {
+  if (empty($description_field)) {
+    $description_field = NULL;
+    $description_label = NULL;
+  }
+  db_update('islandora_solr_metadata_associations')
+    ->fields(array(
+      'description_field' => $description_field,
+      'description_label' => $description_label,
+    ))
+    ->condition('configuration_id', $configuration_id)
+    ->execute();
+  islandora_solr_metadata_update_i18n_description($configuration_id, $description_label);
+}
+
+/**
+ * Update i18n entries for the given fields.
+ *
+ * @param int $id
+ *   An ID for the configuration.
+ * @param array $fields
+ *   An associative array of associative arrays, representing Solr fields
+ *   mapped to the details about the given field, including:
+ *   - configuration_id
+ *   - display_label
+ *   - weight
+ *   - solr_field
+ */
+function islandora_solr_metadata_update_i18n_strings($id, $fields) {
+  if (module_exists('i18n_string')) {
+    foreach ($fields as $field => $info) {
+      $i18n_id = islandora_solr_metadata_field_i18n_id($id, $info['solr_field']);
+      i18n_string_update($i18n_id, $info['display_label']);
+    }
+  }
+}
+
+/**
+ * Remove i18n entries for the given fields.
+ *
+ * @param int $id
+ *   An ID for the configuration.
+ * @param array $fields
+ *   An associative array of associative arrays, representing Solr fields
+ *   mapped to the details about the given field, including:
+ *   - configuration_id
+ *   - display_label
+ *   - weight
+ *   - solr_field
+ */
+function islandora_solr_metadata_remove_i18n_strings($id, $fields) {
+  if (module_exists('i18n_string')) {
+    foreach ($fields as $field => $info) {
+      $i18n_id = islandora_solr_metadata_field_i18n_id($id, $info['solr_field']);
+      i18n_string_remove($i18n_id);
+    }
+  }
+}
+
+/**
+ * Update i18n entries for the description.
+ *
+ * @param int $id
+ *   An ID for the configuration.
+ * @param string $description_label
+ *   The description label that is being added or updated.
+ */
+function islandora_solr_metadata_update_i18n_description($id, $description_label) {
+  if (module_exists('i18n_string')) {
+    $i18n_id = islandora_solr_metadata_description_i18n_id($id);
+    i18n_string_update($i18n_id, $description_label);
+  }
+}
+
+/**
+ * Remove i18n entries for the description.
+ *
+ * @param int $id
+ *   An ID for the configuration.
+ * @param string $description_label
+ *   The description label that is being removed.
+ */
+function islandora_solr_metadata_remove_i18n_description($id) {
+  if (module_exists('i18n_string')) {
+    $i18n_id = islandora_solr_metadata_description_i18n_id($id);
+    i18n_string_remove($i18n_id);
+  }
 }

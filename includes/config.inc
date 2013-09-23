@@ -155,7 +155,7 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
     }
   }
   else {
-    $data = islandora_solr_metadata_get_fields($configuration_id);
+    $data = islandora_solr_metadata_get_fields($configuration_id, FALSE);
   }
 
   if ($field_to_add !== FALSE) {
@@ -198,6 +198,33 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
     '#ajax' => array(
       'callback' => 'islandora_solr_metadata_fields_ajax',
       'wrapper' => 'islandora-solr-metadata-fields-wrapper',
+    ),
+  );
+  $form['islandora_solr_metadata_fields']['description_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Description'),
+    '#description' => t("The field used for rendering the description beneath the object's content"),
+    '#collapsed' => TRUE,
+    '#collapsible' => FALSE,
+  );
+
+  $description = islandora_solr_metadata_retrieve_description($configuration_id, FALSE);
+  $form['islandora_solr_metadata_fields']['description_fieldset']['available_solr_fields'] = array(
+    '#type' => 'textfield',
+    '#description' => t('A field from within Solr'),
+    '#size' => 45,
+    '#autocomplete_path' => 'islandora_solr/autocomplete_luke',
+    '#default_value' => $description['description_field'],
+  );
+  $form['islandora_solr_metadata_fields']['description_fieldset']['display_label'] = array(
+    '#type' => 'textfield',
+    '#description' => t('A label for displaying'),
+    '#size' => 45,
+    '#default_value' => $description['description_label'],
+    '#states' => array(
+      'visible' => array(
+        ':input[name="islandora_solr_metadata_fields[description_fieldset][available_solr_fields]"]' => array('empty' => FALSE),
+      ),
     ),
   );
   $form['islandora_solr_metadata_save'] = array(
@@ -266,6 +293,18 @@ function islandora_solr_metadata_config_form_validate($form, $form_state) {
       form_set_error('islandora_solr_metadata', t('Must select at least one entry to remove!'));
     }
   }
+
+  if ($form_state['triggering_element']['#value'] == 'Save configuration') {
+    $solr_field = $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['available_solr_fields'];
+    if (!empty($solr_field)) {
+      module_load_include('inc', 'islandora_solr_search', 'includes/luke');
+      $solr_luke = islandora_solr_get_luke();
+      $luke_fields = array_keys($solr_luke['fields']);
+      if (!in_array($solr_field, $luke_fields)) {
+        form_set_error('islandora_solr_metadata_fields][description_fieldset][available_solr_fields', t('The field @field is not a valid field within Solr!', array('@field' => $solr_field)));
+      }
+    }
+  }
 }
 
 /**
@@ -282,7 +321,7 @@ function islandora_solr_metadata_config_form_submit($form, $form_state) {
 
   if ($form_state['clicked_button']['#value'] == 'Save configuration') {
     // Grab existing entries first for comparison.
-    $fields_db = islandora_solr_metadata_get_fields($configuration_id);
+    $fields_db = islandora_solr_metadata_get_fields($configuration_id, FALSE);
     if (isset($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table'])) {
       $fields_fs = $form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows'];
     }
@@ -298,64 +337,31 @@ function islandora_solr_metadata_config_form_submit($form, $form_state) {
 
     // Handle insertion and deletion of content models first.
     if (count($cmodels_insertion)) {
-      $query = db_insert('islandora_solr_metadata_cmodels')
-        ->fields(array('configuration_id', 'cmodel'));
-      foreach ($cmodels_insertion as $row) {
-        $query->values(array(
-         'configuration_id' => $configuration_id,
-         'cmodel' => $row['cmodel'],
-        ));
-      }
-      $query->execute();
+      islandora_solr_metadata_add_content_models($configuration_id, $cmodels_insertion);
     }
     if (count($cmodels_deletion)) {
-      db_delete('islandora_solr_metadata_cmodels')
-        ->condition('cmodel', array_keys($cmodels_deletion))
-        ->condition('configuration_id', $configuration_id)
-        ->execute();
+      islandora_solr_metadata_delete_content_models($configuration_id, $cmodels_deletion);
     }
 
     $fields_deletion = array_diff_key($fields_db, $fields_fs);
     $fields_insertion = array_diff_key($fields_fs, $fields_db);
 
     if (count($fields_insertion)) {
-      $query = db_insert('islandora_solr_metadata_fields')
-        ->fields(array(
-          'configuration_id',
-          'solr_field',
-          'display_label',
-          'weight',
-        )
-      );
-
-      foreach ($fields_insertion as $row) {
-        $query->values(array(
-          'configuration_id' => $configuration_id,
-          'solr_field' => $row['solr_field'],
-          'display_label' => $row['display_label'],
-          'weight' => $row['weight'],
-        ));
-      }
-      $query->execute();
+      islandora_solr_metadata_add_fields($configuration_id, $fields_insertion);
     }
     if (count($fields_deletion)) {
-      db_delete('islandora_solr_metadata_fields')
-        ->condition('solr_field', array_keys($fields_deletion))
-        ->condition('configuration_id', $configuration_id)
-        ->execute();
+      islandora_solr_metadata_delete_fields($configuration_id, $fields_deletion);
     }
 
     $fields_update = array_intersect_key($fields_fs, $fields_db);
-    foreach ($fields_update as $row) {
-      db_update('islandora_solr_metadata_fields')
-        ->fields(array(
-          'weight' => $row['weight'],
-          'display_label' => $row['display_label'],
-        ))
-        ->condition('solr_field', $row['solr_field'])
-        ->condition('configuration_id', $configuration_id)
-        ->execute();
+    if (count($fields_update)) {
+      islandora_solr_metadata_update_fields($configuration_id, $fields_update);
     }
+
+    $description_field = $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['available_solr_fields'];
+    $description_label = $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['display_label'];
+    islandora_solr_metadata_update_description($configuration_id, $description_field, $description_label);
+    drupal_set_message(t('The Solr metadata display configuration options have been saved.'));
   }
 
   if ($form_state['clicked_button']['#value'] == 'Delete configuration') {

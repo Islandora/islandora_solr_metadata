@@ -58,6 +58,20 @@ function islandora_solr_metadata_theme() {
       'variables' => array('islandora_object' => NULL),
       'file' => 'theme/theme.inc',
     ),
+    'islandora_solr_metadata_description' => array(
+      'template' => 'theme/islandora-solr-metadata-description',
+      // We can add PIDs to the end of this pattern in our preprocess function
+      // and templates will be able to have have a pid appended to the
+      // template name to overide a template on a per object basis.
+      // An example template might be named:
+      // "islandora-solr-metadata-description--islandora-27.tpl.php".
+      'pattern' => 'islandora_solr_metadata_description__',
+      'variables' => array(
+        'islandora_object' => NULL,
+        'description' => NULL,
+      ),
+      'file' => 'theme/theme.inc',
+    ),
   );
 }
 
@@ -86,6 +100,20 @@ function islandora_solr_metadata_access($configuration_id) {
   return islandora_solr_metadata_configuration_exists($configuration_id) && user_access('administer islandora_solr_metadata');
 }
 
+/**
+ * Implements hook_features_api().
+ */
+function islandora_solr_metadata_features_api() {
+  $mod_path = drupal_get_path('module', 'islandora_solr_metadata');
+  return array(
+    'islandora_solr_metadata_configurations' => array(
+      'name' => t('Islandora Solr Metadata Configurations'),
+      'file' => "$mod_path/includes/configurations.features.inc",
+      'default_hook' => 'islandora_solr_metadata_configurations_default_fields',
+      'feature_source' => TRUE,
+    ),
+  );
+}
 /**
  * Title callback for the configuration display.
  *
@@ -123,7 +151,8 @@ function islandora_solr_metadata_islandora_metadata_display_info() {
     'islandora_solr_metadata' => array(
       'label' => t('Islandora Solr Metadata'),
       'description' => t('Metadata display driven by the Islandora Solr Search module'),
-      'callback' => 'islandora_solr_metadata_display_callback',
+      'metadata callback' => 'islandora_solr_metadata_display_callback',
+      'description callback' => 'islandora_solr_metadata_description_callback',
       'configuration' => 'admin/islandora/search/islandora_solr/metadata',
     ),
   );
@@ -139,8 +168,52 @@ function islandora_solr_metadata_islandora_metadata_display_info() {
  *   Markup representing the metadata display pulled from Solr.
  */
 function islandora_solr_metadata_display_callback(AbstractObject $object) {
-  $elements = array(
-    'islandora_object' => $object,
-  );
-  return theme('islandora_solr_metadata_display', $elements);
+  module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
+  $num_associations = count(islandora_solr_metadata_get_associations_by_cmodels($object->models));
+  if ($num_associations > 0) {
+    $elements = array(
+      'islandora_object' => $object,
+    );
+    return theme('islandora_solr_metadata_display', $elements);
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Metadata display callback for rendering metadata from Solr.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ *
+ * @return string
+ *   Markup representing the metadata display pulled from Solr.
+ */
+function islandora_solr_metadata_description_callback(AbstractObject $object) {
+  module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
+  $associations = islandora_solr_metadata_get_associations_by_cmodels($object->models);
+  if (count($associations) > 0) {
+    $descriptions = array();
+    foreach ($associations as $configuration_id) {
+      $description = islandora_solr_metadata_retrieve_description($configuration_id['configuration_id']);
+      if ($description['description_field'] !== NULL) {
+        $descriptions[] = $description;
+      }
+    }
+    if (count($descriptions)) {
+      $elements = array(
+        'islandora_object' => $object,
+        'description' => $descriptions,
+      );
+      return theme('islandora_solr_metadata_description', $elements);
+    }
+    // There are no description fields defined, return blank markup.
+    else {
+      return '';
+    }
+  }
+  else {
+    return FALSE;
+  }
 }

@@ -44,10 +44,10 @@ function islandora_solr_metadata_preprocess_islandora_solr_metadata_display(arra
   $db_fields = array();
   $solr_fields = array();
   $render_metadata = array();
-
   $associations = islandora_solr_metadata_get_associations_by_cmodels($object->models);
+
   foreach ($associations as $configuration_id) {
-    $field = islandora_solr_metadata_get_fields($configuration_id);
+    $field = islandora_solr_metadata_get_fields($configuration_id['configuration_id']);
     $db_fields = array_merge($solr_fields, $field);
   }
   if (count($db_fields)) {
@@ -75,9 +75,38 @@ function islandora_solr_metadata_preprocess_islandora_solr_metadata_display(arra
         $render_metadata[$solr_field]['value'] = $value;
       }
     }
-    else {
-      drupal_set_message(t('Unable to find @pid object in the Solr index. Contact the administrator!', array('@pid' => $object->id)), 'error');
-    }
-    $variables['solr_fields'] = $render_metadata;
   }
+  else {
+    drupal_set_message(t('Unable to find @pid object in the Solr index. Contact the administrator!', array('@pid' => $object->id)), 'error');
+  }
+  $variables['solr_fields'] = $render_metadata;
+  $variables['parent_collections'] = islandora_get_parents_from_rels_ext($object);
+}
+
+/**
+ * Implements hook_preprocess().
+ */
+function islandora_solr_metadata_preprocess_islandora_solr_metadata_description(array &$variables) {
+  $object = $variables['islandora_object'];
+  $description_render = array();
+  foreach ($variables['description'] as $description) {
+    $query_processor = new IslandoraSolrQueryProcessor();
+    $query_processor->solrQuery = 'PID:"' . $object->id . '"';
+    $query_processor->solrParams['fl'] = "PID, {$description['description_field']}";
+    $query_processor->executeQuery(FALSE);
+    if (count($query_processor->islandoraSolrResult['response']['numFound']) > 0) {
+      $solr_results_doc = $query_processor->islandoraSolrResult['response']['objects']['0']['solr_doc'];
+      foreach ($solr_results_doc as $solr_field => $value) {
+        if ($solr_field == $description['description_field']) {
+          // Want the values in array form even if it's a single valued field.
+          if (!is_array($value)) {
+            $value = (array) $value;
+          }
+          $description_render[$solr_field]['display_label'] = $description['description_label'];
+          $description_render[$solr_field]['value'] = $value;
+        }
+      }
+    }
+  }
+  $variables['description'] = $description_render;
 }
