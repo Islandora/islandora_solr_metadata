@@ -43,7 +43,7 @@ function islandora_solr_metadata_configurations_features_export_render($module_n
     }
     unset($field);
     $code[$machine_name] = array(
-      'fields' => islandora_solr_metadata_get_fields($config_id, FALSE),
+      'fields' => $fields,
       'cmodels' => islandora_solr_metadata_get_cmodels($config_id),
       'description' => islandora_solr_metadata_retrieve_description($config_id, FALSE),
       'name' => islandora_solr_metadata_retrieve_configuration_name($config_id),
