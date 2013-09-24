@@ -163,16 +163,19 @@ function islandora_solr_metadata_islandora_metadata_display_info() {
  *
  * @param AbstractObject $object
  *   An AbstractObject representing an object within Fedora.
+ * @param bool $print
+ *   Whether this is for printing purposes.
  *
  * @return string
  *   Markup representing the metadata display pulled from Solr.
  */
-function islandora_solr_metadata_display_callback(AbstractObject $object) {
+function islandora_solr_metadata_display_callback(AbstractObject $object, $print = FALSE) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   $num_associations = count(islandora_solr_metadata_get_associations_by_cmodels($object->models));
   if ($num_associations > 0) {
     $elements = array(
       'islandora_object' => $object,
+      'print' => $print,
     );
     return theme('islandora_solr_metadata_display', $elements);
   }
