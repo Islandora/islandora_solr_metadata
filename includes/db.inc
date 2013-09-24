@@ -45,8 +45,6 @@ function islandora_solr_metadata_field_i18n_id($config_id, $field_name) {
  *
  * @param int $config_id
  *   The ID of the configuration with which the given field is associated.
- * @param string $description_label
- *   The description label to be translated.
  *
  * @return string
  *   A colon-separated string as used by the
@@ -117,17 +115,6 @@ function islandora_solr_metadata_get_associations_by_cmodels(array $cmodels) {
 function islandora_solr_metadata_get_cmodels($configuration_id) {
   $result = db_query('SELECT cmodel FROM {islandora_solr_metadata_cmodels} WHERE configuration_id = :configuration_id', array(':configuration_id' => $configuration_id));
   return $result->fetchAllAssoc('cmodel', PDO::FETCH_ASSOC);
-}
-
-/**
- * Get all models which have already been associated with a configuration.
- *
- * @return array
- *   An array of strings, representing content model PIDs.
- */
-function islandora_solr_metadata_get_all_associated_cmodels() {
-  $result = db_query('SELECT DISTINCT cmodel FROM {islandora_solr_metadata_cmodels}');
-  return $result->fetchCol();
 }
 
 /**
@@ -404,9 +391,13 @@ function islandora_solr_metadata_update_fields($configuration_id, $fields) {
  *
  * @param int $configuration_id
  *   The configuration ID of the configuration which to add to.
+ * @param bool $translate
+ *   Whether the output needs to be translated.
  *
  * @return array
- *   Some shit.
+ *   An associative array containing:
+ *   -description_field: The Solr field used to generate the description.
+ *   -description_label: The display label associated with the description.
  */
 function islandora_solr_metadata_retrieve_description($configuration_id, $translate = TRUE) {
   $result = db_query('SELECT description_field, description_label FROM {islandora_solr_metadata_associations} WHERE configuration_id = :configuration_id', array(':configuration_id' => $configuration_id));
@@ -507,8 +498,6 @@ function islandora_solr_metadata_update_i18n_description($id, $description_label
  *
  * @param int $id
  *   An ID for the configuration.
- * @param string $description_label
- *   The description label that is being removed.
  */
 function islandora_solr_metadata_remove_i18n_description($id) {
   if (module_exists('i18n_string')) {

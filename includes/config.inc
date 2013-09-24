@@ -123,9 +123,6 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
   foreach ($cmodels_associated as $entry) {
     unset($add_options[$entry['cmodel']]);
   }
-  foreach (islandora_solr_metadata_get_all_associated_cmodels() as $cmodel) {
-    unset($add_options[$cmodel]);
-  }
 
   $form['islandora_solr_metadata_cmodels']['table_wrapper']['cmodel_options']['cmodel_select'] = array(
     '#type' => 'select',
