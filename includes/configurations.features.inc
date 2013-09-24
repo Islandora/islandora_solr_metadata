@@ -38,9 +38,10 @@ function islandora_solr_metadata_configurations_features_export_render($module_n
   foreach ($data as $machine_name => $value) {
     $config_id = islandora_solr_metadata_retrieve_configuration_from_machine_name($machine_name);
     $fields = islandora_solr_metadata_get_fields($config_id, FALSE);
-    foreach ($fields as $field) {
+    foreach ($fields as &$field) {
       unset($field['configuration_id']);
     }
+    unset($field);
     $code[$machine_name] = array(
       'fields' => islandora_solr_metadata_get_fields($config_id, FALSE),
       'cmodels' => islandora_solr_metadata_get_cmodels($config_id),
