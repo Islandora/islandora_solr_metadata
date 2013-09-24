@@ -25,7 +25,7 @@ function islandora_solr_metadata_configurations_features_export_options() {
 function islandora_solr_metadata_configurations_features_export($data, &$export, $module_name = '') {
   $export['dependencies']['islandora_solr_metadata'] = 'islandora_solr_metadata';
   foreach ($data as $component) {
-    $export['features']['islandora_solr_metadata_configurations'][$component] = TRUE;
+    $export['features']['islandora_solr_metadata_configurations'][$component] = $component;
   }
 }
 
@@ -35,7 +35,7 @@ function islandora_solr_metadata_configurations_features_export($data, &$export,
 function islandora_solr_metadata_configurations_features_export_render($module_name, $data, $export = NULL) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   $code = array();
-  foreach ($data as $machine_name => $value) {
+  foreach ($data as $machine_name) {
     $config_id = islandora_solr_metadata_retrieve_configuration_from_machine_name($machine_name);
     $fields = islandora_solr_metadata_get_fields($config_id, FALSE);
     foreach ($fields as &$field) {
