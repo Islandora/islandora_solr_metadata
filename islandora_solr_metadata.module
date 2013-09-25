@@ -55,7 +55,10 @@ function islandora_solr_metadata_theme() {
       // An example template might be named:
       // "islandora-solr-metadata-display--islandora-27.tpl.php".
       'pattern' => 'islandora_solr_metadata_display__',
-      'variables' => array('islandora_object' => NULL),
+      'variables' => array(
+        'islandora_object' => NULL,
+        'print' => NULL,
+      ),
       'file' => 'theme/theme.inc',
     ),
     'islandora_solr_metadata_description' => array(
@@ -68,7 +71,6 @@ function islandora_solr_metadata_theme() {
       'pattern' => 'islandora_solr_metadata_description__',
       'variables' => array(
         'islandora_object' => NULL,
-        'description' => NULL,
       ),
       'file' => 'theme/theme.inc',
     ),
