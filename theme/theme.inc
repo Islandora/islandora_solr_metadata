@@ -63,16 +63,19 @@ function islandora_solr_metadata_preprocess_islandora_solr_metadata_display(arra
     }
     $query_processor = new IslandoraSolrQueryProcessor();
     $query_processor->solrQuery = 'PID:"' . $object->id . '"';
-    $query_processor->solrParams['fl'] = implode(', ', $solr_fields);
+    $query_processor->solrParams['fl'] = 'PID, ' . implode(',', $solr_fields);
     $query_processor->executeQuery(FALSE);
-    if (count($query_processor->islandoraSolrResult['response']['numFound']) > 0) {
+    if ($query_processor->islandoraSolrResult['response']['numFound'] > 0) {
       $solr_results_doc = $query_processor->islandoraSolrResult['response']['objects']['0']['solr_doc'];
       foreach ($solr_results_doc as $solr_field => $value) {
-        // Want the values in array form even if it's a single valued field.
-        if (!is_array($value)) {
-          $value = (array) $value;
+        // Only display fields that were present in our original list.
+        if (in_array($solr_field, $solr_fields)) {
+          // Want the values in array form even if it's a single valued field.
+          if (!is_array($value)) {
+            $value = (array) $value;
+          }
+          $render_metadata[$solr_field]['value'] = $value;
         }
-        $render_metadata[$solr_field]['value'] = $value;
       }
     }
   }
