@@ -326,6 +326,13 @@ function islandora_solr_metadata_config_form_submit($form, $form_state) {
       $fields_fs = array();
     }
 
+    // Need to map the fields so that the keys match what we get out of the
+    // database.
+    $fields_fs_mapped = array();
+    foreach ($fields_fs as $field) {
+      $fields_fs_mapped[$field['solr_field']] = $field;
+    }
+
     $cmodels_db = islandora_solr_metadata_get_cmodels($configuration_id);
     $cmodels_fs = $form_state['complete form']['islandora_solr_metadata_cmodels']['table_wrapper']['table']['#options'];
 
@@ -340,8 +347,8 @@ function islandora_solr_metadata_config_form_submit($form, $form_state) {
       islandora_solr_metadata_delete_content_models($configuration_id, $cmodels_deletion);
     }
 
-    $fields_deletion = array_diff_key($fields_db, $fields_fs);
-    $fields_insertion = array_diff_key($fields_fs, $fields_db);
+    $fields_deletion = array_diff_key($fields_db, $fields_fs_mapped);
+    $fields_insertion = array_diff_key($fields_fs_mapped, $fields_db);
 
     if (count($fields_insertion)) {
       islandora_solr_metadata_add_fields($configuration_id, $fields_insertion);
@@ -350,7 +357,7 @@ function islandora_solr_metadata_config_form_submit($form, $form_state) {
       islandora_solr_metadata_delete_fields($configuration_id, $fields_deletion);
     }
 
-    $fields_update = array_intersect_key($fields_fs, $fields_db);
+    $fields_update = array_intersect_key($fields_fs_mapped, $fields_db);
     if (count($fields_update)) {
       islandora_solr_metadata_update_fields($configuration_id, $fields_update);
     }
