@@ -58,6 +58,7 @@ function islandora_solr_metadata_preprocess_islandora_solr_metadata_display(arra
         // Make an array for use later on.
         $render_metadata[$key] = array(
           'display_label' => $value['display_label'],
+          'value' => array(),
         );
       }
     }

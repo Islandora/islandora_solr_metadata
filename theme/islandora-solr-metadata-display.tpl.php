@@ -24,7 +24,7 @@
           <?php print $value['display_label']; ?>
         </dt>
         <dd class="<?php print $row_field == 0 ? ' first' : ''; ?>">
-          <?php isset($value['value']) ? print implode('<br/>', $value['value']) : '' ?>
+          <?php print implode('<br/>', $value['value']); ?>
         </dd>
         <?php $row_field++; ?>
       <?php endforeach; ?>
