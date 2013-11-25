@@ -75,7 +75,7 @@ function islandora_solr_metadata_preprocess_islandora_solr_metadata_display(arra
           if (!is_array($value)) {
             $value = (array) $value;
           }
-          $render_metadata[$solr_field]['value'] = $value;
+          $render_metadata[$solr_field]['value'] = array_filter(array_map('trim', $value));
         }
       }
     }
@@ -107,7 +107,7 @@ function islandora_solr_metadata_preprocess_islandora_solr_metadata_description(
             $value = (array) $value;
           }
           $description_render[$solr_field]['display_label'] = $description['description_label'];
-          $description_render[$solr_field]['value'] = $value;
+          $description_render[$solr_field]['value'] = array_filter(array_map('trim', $value));
         }
       }
     }
