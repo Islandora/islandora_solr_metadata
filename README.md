@@ -1,5 +1,11 @@
 Islandora Solr Metadata Module
 ==============================
+Current build status:
+[![Build Status](https://travis-ci.org/discoverygarden/islandora_solr_metadata.png?branch=7.x)](https://travis-ci.org/discoverygarden/islandora_solr_metadata)
+
+CI Server:
+http://jenkins.discoverygarden.ca
+
 
 SUMMARY
 -------
