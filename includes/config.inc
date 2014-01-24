@@ -434,6 +434,10 @@ function islandora_solr_metadata_management($data) {
           '#type' => 'textfield',
           '#default_value' => isset($field['display_label']) ? filter_xss($field['display_label']) : '',
         ),
+        'hyperlink' => array(
+          '#type' => 'checkbox',
+          '#default_value' => isset($field['hyperlink']) ? $field['hyperlink'] : FALSE,
+        ),
         'weight' => array(
           '#type' => 'weight',
           '#title' => t('Weight'),
@@ -456,6 +460,7 @@ function islandora_solr_metadata_management($data) {
       t('Remove'),
       t('Solr Field'),
       t('Display Label'),
+      t('Hyperlink'),
       '',
     ),
     'rows' => $rows,

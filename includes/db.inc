@@ -322,6 +322,7 @@ function islandora_solr_metadata_add_fields($configuration_id, $fields) {
         'configuration_id',
         'solr_field',
         'display_label',
+        'hyperlink',
         'weight',
       )
     );
@@ -331,6 +332,7 @@ function islandora_solr_metadata_add_fields($configuration_id, $fields) {
       'configuration_id' => $configuration_id,
       'solr_field' => $field['solr_field'],
       'display_label' => $field['display_label'],
+      'hyperlink' => $field['hyperlink'],
       'weight' => $field['weight'],
     ));
   }
