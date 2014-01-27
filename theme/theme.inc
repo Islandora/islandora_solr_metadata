@@ -19,6 +19,7 @@ function theme_islandora_solr_metadata_management_table(array $variables) {
         drupal_render($row['remove_field']),
         drupal_render($row['solr_field_markup']),
         drupal_render($row['display_label']),
+        drupal_render($row['hyperlink']),
         drupal_render($row['weight']),
       ),
       'class' => array('draggable'),
@@ -60,6 +61,7 @@ function islandora_solr_metadata_preprocess_islandora_solr_metadata_display(arra
         $render_metadata[$key] = array(
           'display_label' => $value['display_label'],
           'value' => array(),
+          'hyperlink' => $value['hyperlink'],
         );
       }
     }
@@ -76,7 +78,17 @@ function islandora_solr_metadata_preprocess_islandora_solr_metadata_display(arra
           if (!is_array($value)) {
             $value = (array) $value;
           }
-          $render_metadata[$solr_field]['value'] = array_filter(array_map('trim', $value));
+          // Trim off any extra values.
+          $value = array_filter(array_map('trim', $value));
+          // Make hyperlinks out of what we need to.
+          if ($render_metadata[$solr_field]['hyperlink']) {
+            module_load_include('inc', 'islandora_solr_search', 'includes/utilities');
+            foreach ($value as &$search_value) {
+              $solr_query = format_string("$solr_field:(!value)", array('!value' => islandora_solr_lesser_escape($search_value)));
+              $search_value = l($search_value, "islandora/search/$solr_query");
+            }
+          }
+          $render_metadata[$solr_field]['value'] = $value;
         }
       }
     }
