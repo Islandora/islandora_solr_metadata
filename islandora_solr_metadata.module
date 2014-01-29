@@ -13,8 +13,7 @@ function islandora_solr_metadata_menu() {
     'title' => 'Metadata Display',
     'type' => MENU_LOCAL_TASK,
     'weight' => 5,
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('islandora_solr_metadata_admin_form'),
+    'page callback' => 'islandora_solr_metadata_admin_page_callback',
     'access arguments' => array('administer islandora_solr_metadata'),
     'file' => 'includes/admin.inc',
   );
