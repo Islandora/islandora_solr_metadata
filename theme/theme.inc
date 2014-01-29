@@ -72,7 +72,7 @@ function islandora_solr_metadata_preprocess_islandora_solr_metadata_display(arra
     if ($query_processor->islandoraSolrResult['response']['numFound'] > 0) {
       $solr_results_doc = $query_processor->islandoraSolrResult['response']['objects']['0']['solr_doc'];
 
-      //Ensure we only provide results for what is specified.
+      // Ensure we only provide results for what is specified.
       $constrained_results = array_intersect_key($solr_results_doc, drupal_map_assoc($solr_fields));
 
       foreach ($constrained_results as $solr_field => $value) {
@@ -101,7 +101,6 @@ function islandora_solr_metadata_preprocess_islandora_solr_metadata_display(arra
   else {
     drupal_set_message(t('Unable to find @pid object in the Solr index. Contact the administrator!', array('@pid' => $object->id)), 'error');
   }
-
 
   if (variable_get('islandora_solr_metadata_omit_empty_values', FALSE)) {
     $filter_function = function ($field_info) {

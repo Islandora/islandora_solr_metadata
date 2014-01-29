@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * @file
+ * Form for general module configuration.
+ */
+
+/**
+ * Form building function for general config.
+ */
 function islandora_solr_metadata_general_admin_form($form, &$form_state) {
   form_load_include($form_state, 'inc', 'islandora_solr_metadata', 'includes/general.admin');
 
@@ -22,6 +30,9 @@ function islandora_solr_metadata_general_admin_form($form, &$form_state) {
   return $form;
 }
 
+/**
+ * Submission handler for general config form.
+ */
 function islandora_solr_metadata_general_admin_form_submit(&$form, &$form_state) {
   $variables = array(
     'islandora_solr_metadata_omit_empty_values',
