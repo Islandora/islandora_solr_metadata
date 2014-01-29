@@ -111,12 +111,7 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
       ),
     );
   }
-  $form['islandora_solr_metadata_cmodels']['table_wrapper']['cmodel_options'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Add content model'),
-    '#collapsed' => TRUE,
-    '#collapsible' => FALSE,
-  );
+
   // Retrieve all content models and unset those currently in use in this
   // configuration and any others from other configurations.
   $add_options = islandora_get_content_model_names();
@@ -124,19 +119,28 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
     unset($add_options[$entry['cmodel']]);
   }
 
-  $form['islandora_solr_metadata_cmodels']['table_wrapper']['cmodel_options']['cmodel_select'] = array(
-    '#type' => 'select',
-    '#options' => $add_options,
-  );
-  $form['islandora_solr_metadata_cmodels']['table_wrapper']['cmodel_options']['cmodel_add'] = array(
-    '#type' => 'button',
-    '#value' => t('Add'),
-    '#name' => 'islandora-solr-metadata-cmodels-add-cmodel',
-    '#ajax' => array(
-      'callback' => 'islandora_solr_metadata_cmodels_ajax',
-      'wrapper' => 'islandora-solr-metadata-cmodels-wrapper',
-    ),
-  );
+  if (!empty($add_options)) {
+    $form['islandora_solr_metadata_cmodels']['table_wrapper']['cmodel_options'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Add content model'),
+      '#collapsed' => TRUE,
+      '#collapsible' => FALSE,
+    );
+
+    $form['islandora_solr_metadata_cmodels']['table_wrapper']['cmodel_options']['cmodel_select'] = array(
+      '#type' => 'select',
+      '#options' => $add_options,
+    );
+    $form['islandora_solr_metadata_cmodels']['table_wrapper']['cmodel_options']['cmodel_add'] = array(
+      '#type' => 'button',
+      '#value' => t('Add'),
+      '#name' => 'islandora-solr-metadata-cmodels-add-cmodel',
+      '#ajax' => array(
+        'callback' => 'islandora_solr_metadata_cmodels_ajax',
+        'wrapper' => 'islandora-solr-metadata-cmodels-wrapper',
+      ),
+    );
+  }
 
   $form['islandora_solr_metadata_fields'] = array(
     '#type' => 'fieldset',
