@@ -84,7 +84,10 @@ function islandora_solr_metadata_preprocess_islandora_solr_metadata_display(arra
           if ($render_metadata[$solr_field]['hyperlink']) {
             module_load_include('inc', 'islandora_solr_search', 'includes/utilities');
             foreach ($value as &$search_value) {
-              $solr_query = format_string("$solr_field:(!value)", array('!value' => islandora_solr_lesser_escape($search_value)));
+              $solr_query = format_string('!field:"!value"', array(
+                '!field' => $solr_field,
+                '!value' => islandora_solr_lesser_escape($search_value),
+              ));
               $search_value = l($search_value, "islandora/search/$solr_query");
             }
           }
