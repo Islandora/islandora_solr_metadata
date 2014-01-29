@@ -92,6 +92,7 @@ function islandora_solr_metadata_preprocess_islandora_solr_metadata_display(arra
             ));
             $search_value = l($search_value, "islandora/search/$solr_query");
           }
+          unset($search_value);
         }
 
         $render_metadata[$solr_field]['value'] = $value;
