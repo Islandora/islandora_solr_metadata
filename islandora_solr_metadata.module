@@ -56,7 +56,8 @@ function islandora_solr_metadata_theme() {
       'pattern' => 'islandora_solr_metadata_display__',
       'variables' => array(
         'islandora_object' => NULL,
-        'print' => NULL,
+        'print' => FALSE,
+        'solr_fields' => array(),
       ),
       'file' => 'theme/theme.inc',
     ),
@@ -70,6 +71,7 @@ function islandora_solr_metadata_theme() {
       'pattern' => 'islandora_solr_metadata_description__',
       'variables' => array(
         'islandora_object' => NULL,
+        'solr_fields' => array(),
       ),
       'file' => 'theme/theme.inc',
     ),
@@ -195,29 +197,8 @@ function islandora_solr_metadata_display_callback(AbstractObject $object, $print
  *   Markup representing the metadata display pulled from Solr.
  */
 function islandora_solr_metadata_description_callback(AbstractObject $object) {
-  module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
-  $associations = islandora_solr_metadata_get_associations_by_cmodels($object->models);
-  if (count($associations) > 0) {
-    $descriptions = array();
-    foreach ($associations as $configuration_id) {
-      $description = islandora_solr_metadata_retrieve_description($configuration_id['configuration_id']);
-      if ($description['description_field'] !== NULL) {
-        $descriptions[] = $description;
-      }
-    }
-    if (count($descriptions)) {
-      $elements = array(
-        'islandora_object' => $object,
-        'description' => $descriptions,
-      );
-      return theme('islandora_solr_metadata_description', $elements);
-    }
-    // There are no description fields defined, return blank markup.
-    else {
-      return '';
-    }
-  }
-  else {
-    return FALSE;
-  }
+  $elements = array(
+    'islandora_object' => $object,
+  );
+  return theme('islandora_solr_metadata_description', $elements);
 }

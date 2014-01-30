@@ -52,77 +52,37 @@ function theme_islandora_solr_metadata_management_table(array $variables) {
 function template_preprocess_islandora_solr_metadata_display(array &$variables) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   module_load_include('inc', 'islandora', 'includes/utilities');
+
   $object = $variables['islandora_object'];
   $db_fields = array();
-  $solr_fields = array();
-  $render_metadata = array();
+  $solr_fields =& $variables['solr_fields'];
   $associations = islandora_solr_metadata_get_associations_by_cmodels($object->models);
 
   foreach ($associations as $configuration_id) {
     $field = islandora_solr_metadata_get_fields($configuration_id['configuration_id']);
-    $db_fields = array_merge($solr_fields, $field);
+    $db_fields = array_merge($db_fields, $field);
   }
-  if (count($db_fields)) {
-    uasort($db_fields, 'drupal_sort_weight');
-    foreach ($db_fields as $key => $value) {
-      if (!in_array($value, $solr_fields)) {
-        $solr_fields[] = $value['solr_field'];
-        // Make an array for use later on.
-        $render_metadata[$key] = array(
-          'display_label' => $value['display_label'],
-          'value' => array(),
-          'hyperlink' => $value['hyperlink'],
-        );
-      }
+  foreach ($db_fields as $solr_field => $value) {
+    if (isset($solr_fields[$solr_field])) {
+      continue;
     }
-    $query_processor = new IslandoraSolrQueryProcessor();
-    $query_processor->solrQuery = 'PID:"' . $object->id . '"';
-    $query_processor->solrParams['fl'] = 'PID, ' . implode(',', $solr_fields);
-    $query_processor->executeQuery(FALSE);
-    if ($query_processor->islandoraSolrResult['response']['numFound'] > 0) {
-      $solr_results_doc = $query_processor->islandoraSolrResult['response']['objects']['0']['solr_doc'];
-
-      // Ensure we only provide results for what is specified.
-      $constrained_results = array_intersect_key($solr_results_doc, drupal_map_assoc($solr_fields));
-
-      foreach ($constrained_results as $solr_field => $value) {
-        // Want the values in array form even if it's a single valued field.
-        if (!is_array($value)) {
-          $value = (array) $value;
-        }
-        // Trim off any extra values.
-        $value = array_filter(array_map('trim', $value));
-        // Make hyperlinks out of what we need to.
-        if ($render_metadata[$solr_field]['hyperlink']) {
-          module_load_include('inc', 'islandora_solr_search', 'includes/utilities');
-          foreach ($value as &$search_value) {
-            $solr_query = format_string('!field:"!value"', array(
-              '!field' => $solr_field,
-              '!value' => islandora_solr_lesser_escape($search_value),
-            ));
-            $search_value = l($search_value, "islandora/search/$solr_query");
-          }
-          unset($search_value);
-        }
-
-        $render_metadata[$solr_field]['value'] = $value;
-      }
-    }
-  }
-  else {
-    drupal_set_message(t('Unable to find @pid object in the Solr index. Contact the administrator!', array('@pid' => $object->id)), 'error');
+    // Make an array for use later on.
+    $solr_fields[$solr_field] = array(
+      'display_label' => $value['display_label'],
+      'value' => array(),
+      'hyperlink' => $value['hyperlink'],
+      'weight' => $value['weight'],
+    );
   }
 
-  if (variable_get('islandora_solr_metadata_omit_empty_values', FALSE)) {
-    $filter_function = function ($field_info) {
-      return !empty($field_info['value']);
-    };
-    $filtered = array_filter($render_metadata, $filter_function);
-    $render_metadata = $filtered;
-  }
-
-  $variables['solr_fields'] = $render_metadata;
   $variables['parent_collections'] = islandora_get_parents_from_rels_ext($object);
+}
+
+/**
+ * Implements template_process_HOOK() for islandora_solr_metadata_description.
+ */
+function template_process_islandora_solr_metadata_display(array &$variables) {
+  islandora_solr_metadata_query_fields($variables['islandora_object'], $variables['solr_fields']);
 }
 
 /**
@@ -137,25 +97,96 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
  */
 function template_preprocess_islandora_solr_metadata_description(array &$variables) {
   $object = $variables['islandora_object'];
-  $description_render = array();
-  foreach ($variables['description'] as $description) {
-    $query_processor = new IslandoraSolrQueryProcessor();
-    $query_processor->solrQuery = 'PID:"' . $object->id . '"';
-    $query_processor->solrParams['fl'] = "PID, {$description['description_field']}";
-    $query_processor->executeQuery(FALSE);
-    if (count($query_processor->islandoraSolrResult['response']['numFound']) > 0) {
-      $solr_results_doc = $query_processor->islandoraSolrResult['response']['objects']['0']['solr_doc'];
-      foreach ($solr_results_doc as $solr_field => $value) {
-        if ($solr_field == $description['description_field']) {
-          // Want the values in array form even if it's a single valued field.
-          if (!is_array($value)) {
-            $value = (array) $value;
-          }
-          $description_render[$solr_field]['display_label'] = $description['description_label'];
-          $description_render[$solr_field]['value'] = array_filter(array_map('trim', $value));
-        }
-      }
+  $solr_fields =& $variables['solr_fields'];
+
+  $descriptions = array();
+  module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
+  $associations = islandora_solr_metadata_get_associations_by_cmodels($object->models);
+  foreach ($associations as $configuration_id) {
+    $description = islandora_solr_metadata_retrieve_description($configuration_id['configuration_id']);
+    if ($description['description_field'] !== NULL) {
+      $descriptions[] = $description;
     }
   }
-  $variables['description'] = $description_render;
+  foreach ($descriptions as $description) {
+    $desc_field = $description['description_field'];
+    $solr_fields[$desc_field] = array(
+      'display_label' => $description['description_label'],
+    );
+  }
+}
+
+/**
+ * Implements template_process_HOOK() for islandora_solr_metadata_description.
+ */
+function template_process_islandora_solr_metadata_description(array &$variables) {
+  islandora_solr_metadata_query_fields($variables['islandora_object'], $variables['solr_fields']);
+
+  // XXX: Seems a little odd, yes... Was reusing the "description" value,
+  // though.
+  $variables['description'] = $variables['solr_fields'];
+}
+
+/**
+ * Perform the query to Solr to get our metadata values.
+ *
+ * @param AbstractObject $object
+ *   The object for which we are going to query Solr... Really only need the
+ *   PID...
+ * @param array $solr_fields
+ *   An associative array mapping Solr fields to associative arrays, of which
+ *   we use:
+ *   - hyperlink: An optional boolean indicating if the given value should be
+ *     rendered a link.
+ *   - weight: An optional weight we will use to sort the values.
+ */
+function islandora_solr_metadata_query_fields($object, &$solr_fields) {
+  if (!empty($solr_fields)) {
+    $query_processor = new IslandoraSolrQueryProcessor();
+    $query_processor->solrQuery = 'PID:"' . $object->id . '"';
+    $query_processor->solrParams['fl'] = 'PID, ' . implode(',', array_keys($solr_fields));
+    $query_processor->executeQuery(FALSE);
+    if ($query_processor->islandoraSolrResult['response']['numFound'] > 0) {
+      $solr_results_doc = $query_processor->islandoraSolrResult['response']['objects']['0']['solr_doc'];
+
+      // Ensure we only provide results for what is specified.
+      $constrained_results = array_intersect_key($solr_results_doc, $solr_fields);
+
+      foreach ($constrained_results as $solr_field => $value) {
+        // Want the values in array form even if it's a single valued field.
+        if (!is_array($value)) {
+          $value = (array) $value;
+        }
+        // Trim off any extra values.
+        $value = array_filter(array_map('trim', $value));
+        // Make hyperlinks out of what we need to.
+        if (isset($solr_fields[$solr_field]['hyperlink']) && $solr_fields[$solr_field]['hyperlink']) {
+          module_load_include('inc', 'islandora_solr_search', 'includes/utilities');
+          foreach ($value as &$search_value) {
+            $solr_query = format_string('!field:"!value"', array(
+              '!field' => $solr_field,
+              '!value' => islandora_solr_lesser_escape($search_value),
+            ));
+            $search_value = l($search_value, "islandora/search/$solr_query");
+          }
+          unset($search_value);
+        }
+
+        $solr_fields[$solr_field]['value'] = $value;
+      }
+
+      if (variable_get('islandora_solr_metadata_omit_empty_values', FALSE)) {
+        $filter_function = function ($field_info) {
+          return !empty($field_info['value']);
+        };
+        $filtered = array_filter($solr_fields, $filter_function);
+        $solr_fields = $filtered;
+      }
+
+      uasort($solr_fields, 'drupal_sort_weight');
+    }
+    else {
+      drupal_set_message(t('Unable to find @pid object in the Solr index. Contact the administrator!', array('@pid' => $object->id)), 'error');
+    }
+  }
 }
