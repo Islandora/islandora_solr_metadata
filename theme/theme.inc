@@ -37,9 +37,19 @@ function theme_islandora_solr_metadata_management_table(array $variables) {
 }
 
 /**
- * Implements hook_preprocess().
+ * Prepares variables for islandora_solr_metadata_display templates.
+ *
+ * Default template: islandora-solr-metadata-display.tpl.php
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - islandora_object: The AbstractObject for which we are generating a
+ *     metadata display.
+ *   - print: A boolean indicating to disable some functionality, to facilitate
+ *     printing. When TRUE, avoids adding the "collapsible" and "collapsed"
+ *     classes to fieldsets.
  */
-function islandora_solr_metadata_preprocess_islandora_solr_metadata_display(array &$variables) {
+function template_preprocess_islandora_solr_metadata_display(array &$variables) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   module_load_include('inc', 'islandora', 'includes/utilities');
   $object = $variables['islandora_object'];
@@ -116,9 +126,16 @@ function islandora_solr_metadata_preprocess_islandora_solr_metadata_display(arra
 }
 
 /**
- * Implements hook_preprocess().
+ * Prepares variables for islandora_solr_metadata_description templates.
+ *
+ * Default template: islandora-solr-metadata-description.tpl.php
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - islandora_object: The AbstractObject for which we are generating a
+ *     metadata display.
  */
-function islandora_solr_metadata_preprocess_islandora_solr_metadata_description(array &$variables) {
+function template_preprocess_islandora_solr_metadata_description(array &$variables) {
   $object = $variables['islandora_object'];
   $description_render = array();
   foreach ($variables['description'] as $description) {
