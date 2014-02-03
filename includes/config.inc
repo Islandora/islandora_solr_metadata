@@ -184,7 +184,7 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
   $form['islandora_solr_metadata_fields']['table_wrapper']['add_fieldset']['available_solr_fields'] = array(
     '#type' => 'textfield',
     '#description' => t('A field from within Solr'),
-    '#size' => 45,
+    '#size' => 70,
     '#autocomplete_path' => 'islandora_solr/autocomplete_luke',
     '#default_value' => '',
   );
@@ -209,7 +209,7 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
   $form['islandora_solr_metadata_fields']['description_fieldset']['available_solr_fields'] = array(
     '#type' => 'textfield',
     '#description' => t('A field from within Solr'),
-    '#size' => 45,
+    '#size' => 70,
     '#autocomplete_path' => 'islandora_solr/autocomplete_luke',
     '#default_value' => $description['description_field'],
   );
