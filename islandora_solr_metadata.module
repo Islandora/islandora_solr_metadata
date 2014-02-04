@@ -72,6 +72,7 @@ function islandora_solr_metadata_theme() {
       'variables' => array(
         'islandora_object' => NULL,
         'solr_fields' => array(),
+        'combine' => TRUE,
       ),
       'file' => 'theme/theme.inc',
     ),
