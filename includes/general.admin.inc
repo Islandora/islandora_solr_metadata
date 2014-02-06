@@ -18,6 +18,12 @@ function islandora_solr_metadata_general_admin_form($form, &$form_state) {
       '#description' => t('Avoid rendering fields which have no values associated with them.'),
       '#default_value' => variable_get('islandora_solr_metadata_omit_empty_values', FALSE),
     ),
+    'islandora_solr_metadata_dedup_values' => array(
+      '#type' => 'checkbox',
+      '#title' => t('Omit Duplicate Values'),
+      '#description' => t('Only show unique values from each field. NOTE: Uniqueness is checked on values directly out of Solr. Later formatting of the value could break uniqueness.'),
+      '#default_value' => variable_get('islandora_solr_metadata_dedup_values', FALSE),
+    ),
     'actions' => array(
       '#type' => 'actions',
       'submit' => array(
@@ -36,6 +42,7 @@ function islandora_solr_metadata_general_admin_form($form, &$form_state) {
 function islandora_solr_metadata_general_admin_form_submit(&$form, &$form_state) {
   $variables = array(
     'islandora_solr_metadata_omit_empty_values',
+    'islandora_solr_metadata_dedup_values',
   );
 
   foreach ($variables as $variable) {

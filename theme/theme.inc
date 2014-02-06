@@ -52,6 +52,8 @@ function theme_islandora_solr_metadata_management_table(array $variables) {
 function template_preprocess_islandora_solr_metadata_display(array &$variables) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   module_load_include('inc', 'islandora', 'includes/utilities');
+  drupal_add_js('misc/form.js');
+  drupal_add_js('misc/collapse.js');
 
   $object = $variables['islandora_object'];
   $db_fields = array();
@@ -139,6 +141,8 @@ function template_process_islandora_solr_metadata_description(array &$variables)
  *   - hyperlink: An optional boolean indicating if the given value should be
  *     rendered a link.
  *   - weight: An optional weight we will use to sort the values.
+ *   - formatter: An optional callable to which we will call with each value
+ *     from the given field, to return alternate text or markup as desired.
  */
 function islandora_solr_metadata_query_fields($object, &$solr_fields) {
   if (!empty($solr_fields)) {
@@ -182,6 +186,20 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
         $filtered = array_filter($solr_fields, $filter_function);
         $solr_fields = $filtered;
       }
+
+      if (variable_get('islandora_solr_metadata_dedup_values', FALSE)) {
+        foreach ($solr_fields as &$field) {
+          $field['value'] = array_unique($field['value']);
+        }
+        unset($field);
+      }
+
+      foreach ($solr_fields as &$field) {
+        if (isset($field['formatter']) && is_callable($field['formatter'])) {
+          $field['value'] = array_map($field['formatter'], $field['value']);
+        }
+      }
+      unset($field);
 
       uasort($solr_fields, 'drupal_sort_weight');
     }
