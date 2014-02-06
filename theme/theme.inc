@@ -52,6 +52,8 @@ function theme_islandora_solr_metadata_management_table(array $variables) {
 function template_preprocess_islandora_solr_metadata_display(array &$variables) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   module_load_include('inc', 'islandora', 'includes/utilities');
+  drupal_add_js('misc/form.js');
+  drupal_add_js('misc/collapse.js');
 
   $object = $variables['islandora_object'];
   $db_fields = array();
