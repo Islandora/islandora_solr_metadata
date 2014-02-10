@@ -148,7 +148,7 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
   if (!empty($solr_fields)) {
     $query_processor = new IslandoraSolrQueryProcessor();
     $query_processor->solrQuery = 'PID:"' . $object->id . '"';
-    $query_processor->solrParams['fl'] = 'PID, ' . implode(',', array_keys($solr_fields));
+    $query_processor->solrParams['fl'] = '*';
     $query_processor->executeQuery(FALSE);
     if ($query_processor->islandoraSolrResult['response']['numFound'] > 0) {
       $solr_results_doc = $query_processor->islandoraSolrResult['response']['objects']['0']['solr_doc'];
