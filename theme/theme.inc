@@ -114,6 +114,7 @@ function template_preprocess_islandora_solr_metadata_description(array &$variabl
     $desc_field = $description['description_field'];
     $solr_fields[$desc_field] = array(
       'display_label' => $description['description_label'],
+      'value' => array(),
     );
   }
 }
