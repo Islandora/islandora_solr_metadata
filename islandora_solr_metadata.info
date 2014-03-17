@@ -4,5 +4,5 @@ dependencies[] = islandora_solr
 description = Construct metadata displays from Solr fields.
 configure = admin/islandora/search/islandora_solr/metadata
 package = Islandora
-version = 7.x-dev
+version = 7.x-1.3
 core = 7.x
