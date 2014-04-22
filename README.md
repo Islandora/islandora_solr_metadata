@@ -20,11 +20,11 @@ Install as usual, see [this](https://drupal.org/documentation/install/modules-th
 
 The Islandora Solr Metadata module is used by selecting it to be the default metadata display viewer at Administration » Islandora » Metadata Display (admin/islandora/metadata).
 
-![Configuration](http://i.imgur.com/fa5o5fX.png)
+![Configuration](https://camo.githubusercontent.com/f5a44185e2c1e7f81e0f76d10a885640e2281479/687474703a2f2f692e696d6775722e636f6d2f6661356f3566582e706e67)
 
 General configuration and metadata field configurations is avaialble at Administration » Islandora » Solr Index » Solr Index (admin/islandora/search/islandora_solr/metadata).
 
-![Configuration](http://i.imgur.com/rKevNLc.png)
+![Configuration](https://camo.githubusercontent.com/ae1155798564091ff4623aebe039ef962f8ce9ff/687474703a2f2f692e696d6775722e636f6d2f724b65764e4c632e706e67)
 
 ### Customization
 
