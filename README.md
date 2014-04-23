@@ -1,4 +1,4 @@
-# Islandora Solr Metadata [![Build Status](https://travis-ci.org/discoverygarden/islandora_solr_metadata.png?branch=7.x)](https://travis-ci.org/discoverygarden/islandora_solr_metadata)
+# Islandora Solr Metadata [![Build Status](https://travis-ci.org/Islandora/islandora_solr_metadata.png?branch=7.x)](https://travis-ci.org/Islandora/islandora_solr_metadata)
 
 ## Introduction
 
