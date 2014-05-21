@@ -6,3 +6,5 @@ configure = admin/islandora/search/islandora_solr/metadata
 package = Islandora
 version = 7.x-dev
 core = 7.x
+
+stylesheets[all][] = css/islandora_solr_metadata.css
