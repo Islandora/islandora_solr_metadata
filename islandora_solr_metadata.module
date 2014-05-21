@@ -198,8 +198,15 @@ function islandora_solr_metadata_display_callback(AbstractObject $object, $print
  *   Markup representing the metadata display pulled from Solr.
  */
 function islandora_solr_metadata_description_callback(AbstractObject $object) {
-  $elements = array(
-    'islandora_object' => $object,
-  );
-  return theme('islandora_solr_metadata_description', $elements);
+  module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
+  $num_associations = count(islandora_solr_metadata_get_associations_by_cmodels($object->models));
+  if ($num_associations > 0) {
+    $elements = array(
+      'islandora_object' => $object,
+    );
+    return theme('islandora_solr_metadata_description', $elements);
+  }
+  else {
+    return FALSE;
+  }
 }
