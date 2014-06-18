@@ -276,7 +276,7 @@ function islandora_solr_metadata_configuration_exists($configuration_id) {
  */
 function islandora_solr_metadata_add_content_models($configuration_id, $content_models) {
   $query = db_insert('islandora_solr_metadata_cmodels')
-     ->fields(array('configuration_id', 'cmodel'));
+    ->fields(array('configuration_id', 'cmodel'));
   foreach ($content_models as $content_model) {
     $query->values(array(
       'configuration_id' => $configuration_id,

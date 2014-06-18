@@ -84,7 +84,11 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
  * Implements template_process_HOOK() for islandora_solr_metadata_description.
  */
 function template_process_islandora_solr_metadata_display(array &$variables) {
-  islandora_solr_metadata_query_fields($variables['islandora_object'], $variables['solr_fields']);
+  $variables['found'] = islandora_solr_metadata_query_fields($variables['islandora_object'], $variables['solr_fields']);
+  $variables['not_found_message'] = t('Document not present in Solr while generating the metadata display for @id. Try !reloading the page, or contact an administrator if this issue persists.', array(
+    '@id' => $variables['islandora_object']->id,
+    '!reloading' => '<a href="" onclick="window.location.reload(true)">' . t('reloading') . '</a>',
+  ));
 }
 
 /**
@@ -123,7 +127,7 @@ function template_preprocess_islandora_solr_metadata_description(array &$variabl
  * Implements template_process_HOOK() for islandora_solr_metadata_description.
  */
 function template_process_islandora_solr_metadata_description(array &$variables) {
-  islandora_solr_metadata_query_fields($variables['islandora_object'], $variables['solr_fields']);
+  $variables['found'] = islandora_solr_metadata_query_fields($variables['islandora_object'], $variables['solr_fields']);
 
   // XXX: Seems a little odd, yes... Was reusing the "description" value,
   // though.
@@ -144,6 +148,10 @@ function template_process_islandora_solr_metadata_description(array &$variables)
  *   - weight: An optional weight we will use to sort the values.
  *   - formatter: An optional callable to which we will call with each value
  *     from the given field, to return alternate text or markup as desired.
+ *
+ * @return bool
+ *   TRUE if we have found a document for the object in question; otherwise,
+ *   FALSE.
  */
 function islandora_solr_metadata_query_fields($object, &$solr_fields) {
   if (!empty($solr_fields)) {
@@ -203,9 +211,10 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
       unset($field);
 
       uasort($solr_fields, 'drupal_sort_weight');
+      return TRUE;
     }
     else {
-      drupal_set_message(t('Unable to find @pid object in the Solr index. Contact the administrator!', array('@pid' => $object->id)), 'error');
+      return FALSE;
     }
   }
 }
