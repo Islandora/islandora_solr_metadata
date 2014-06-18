@@ -5,12 +5,13 @@
  *
  * Available variables:
  * - $islandora_object: The Islandora object rendered in this template file
+ * - $found: Boolean indicating if a Solr doc was found for the current object.
  *
- * @see template_preprocess_islandora_dublin_core_description()
- * @see theme_islandora_dublin_core_description()
+ * @see template_preprocess_islandora_solr_metadata_description()
+ * @see template_process_islandora_solr_metadata_description()
  */
 ?>
-<?php if (!empty($description)): ?>
+<?php if ($found && !empty($description)): ?>
   <div class="islandora-solr-metadata-sidebar">
     <?php if ($combine): ?>
       <h2><?php if (count($description) > 1):
