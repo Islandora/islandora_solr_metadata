@@ -30,7 +30,7 @@
           <?php print $value['display_label']; ?>
         </dt>
         <dd class="<?php print $row_field == 0 ? ' first' : ''; ?>">
-          <?php print implode('<br/>', $value['value']); ?>
+          <?php print check_markup(implode("\n", $value['value']), 'filtered_html'); ?>
         </dd>
         <?php $row_field++; ?>
       <?php endforeach; ?>
