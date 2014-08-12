@@ -154,16 +154,21 @@ function islandora_solr_metadata_add_configuration($configuration_name, $machine
  * @param bool $translate
  *   Whether or not to attempt to translate the "display labels" with i18n.
  *   Defaults to TRUE.
+ * @param bool $filtered
+ *   Whether to filter out results based upon security restrictions.
  *
  * @return array
  *   An associative array of associative arrays, representing Solr fields
  *   mapped to the details about the given field, including:
  *   - configuration_id
  *   - display_label
+ *   - hyperlink
+ *   - permissions
+ *   - date_format
  *   - weight
  *   - solr_field
  */
-function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE) {
+function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE, $filtered = FALSE) {
   $result = db_query('SELECT * FROM {islandora_solr_metadata_fields} WHERE configuration_id = :configuration_id ORDER BY weight', array(':configuration_id' => $configuration_id));
 
   $fields = $result->fetchAllAssoc('solr_field', PDO::FETCH_ASSOC);
@@ -176,9 +181,48 @@ function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE
     // XXX: foreach with references can be silly.
     unset($field_info);
   }
+  $fields_to_filter = $fields;
+  foreach ($fields_to_filter as $key => $field) {
+
+    $fields[$key]['permissions'] = unserialize($field['permissions']);
+    // If the user doesn't have access let's filter this field now.
+    if ($filtered) {
+      $filtered_field = islandora_solr_metadata_filter_field($field);
+      if (!$filtered_field) {
+        unset($fields[$key]);
+      }
+    }
+  }
+  unset($field);
   return $fields;
 }
 
+/**
+ * Helper function to filter out fields based upon permissions.
+ *
+ * @param array $field
+ *   An array representing a Solr Metadata configuration field containing:
+ *   - configuration_id
+ *   - display_label
+ *   - hyperlink
+ *   - permissions
+ *   - date_format
+ *   - weight
+ *   - solr_field
+ *
+ * @return array
+ *   The field if the user is super, an intersection of permissions and the
+ *   current user's roles otherwise.
+ */
+function islandora_solr_metadata_filter_field($field) {
+  global $user;
+
+  if ($user->uid == 1) {
+    return $field;
+  }
+
+  return array_intersect(unserialize($field['permissions']), array_keys($user->roles));
+}
 /**
  * Get the name for the given configuration.
  *
@@ -323,6 +367,8 @@ function islandora_solr_metadata_add_fields($configuration_id, $fields) {
         'solr_field',
         'display_label',
         'hyperlink',
+        'date_format',
+        'permissions',
         'weight',
       )
     );
@@ -333,6 +379,8 @@ function islandora_solr_metadata_add_fields($configuration_id, $fields) {
       'solr_field' => $field['solr_field'],
       'display_label' => $field['display_label'],
       'hyperlink' => $field['hyperlink'],
+      'date_format' => $field['date_format'],
+      'permissions' => serialize($field['permissions']),
       'weight' => $field['weight'],
     ));
   }
@@ -381,6 +429,8 @@ function islandora_solr_metadata_update_fields($configuration_id, $fields) {
         'weight' => $field['weight'],
         'display_label' => $field['display_label'],
         'hyperlink' => $field['hyperlink'],
+        'date_format' => $field['date_format'],
+        'permissions' => serialize($field['permissions']),
       ))
       ->condition('solr_field', $field['solr_field'])
       ->condition('configuration_id', $configuration_id)

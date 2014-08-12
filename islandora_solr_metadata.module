@@ -34,6 +34,13 @@ function islandora_solr_metadata_menu() {
     'access arguments' => array(6),
     'file' => 'includes/delete.inc',
   );
+  $items['test'] = array(
+    'title' => 'Test',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('test_form'),
+    'access callback' => TRUE,
+    'file' => 'includes/test.inc',
+  );
   return $items;
 }
 

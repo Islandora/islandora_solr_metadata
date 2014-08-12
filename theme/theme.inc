@@ -18,9 +18,10 @@ function theme_islandora_solr_metadata_management_table(array $variables) {
       'data' => array(
         drupal_render($row['remove_field']),
         drupal_render($row['solr_field_markup']),
-        drupal_render($row['display_label']),
-        drupal_render($row['hyperlink']),
         drupal_render($row['weight']),
+        drupal_render($row['configure']),
+        drupal_render($row['configure_button']),
+        drupal_render($row['dialog_button']),
       ),
       'class' => array('draggable'),
     );
@@ -51,6 +52,7 @@ function theme_islandora_solr_metadata_management_table(array $variables) {
  */
 function template_preprocess_islandora_solr_metadata_display(array &$variables) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
+  module_load_include('inc', 'islandora_solr', 'includes/db');
   module_load_include('inc', 'islandora', 'includes/utilities');
   drupal_add_js('misc/form.js');
   drupal_add_js('misc/collapse.js');
@@ -61,7 +63,15 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
   $associations = islandora_solr_metadata_get_associations_by_cmodels($object->models);
 
   foreach ($associations as $configuration_id) {
-    $field = islandora_solr_metadata_get_fields($configuration_id['configuration_id']);
+    // @TODO: How do we handle the case where there is only one field configured
+    // but it gets stripped away? Looks like Solr makes -two- DB calls and see
+    // if they are equivalent, could do that? Probably not the best probably
+    // just filter out down below somehow?
+
+    // @TODO: Make the process which displays a warning to the user better as
+    // currently f there are no fields defined or if the above condition is true
+    // the warning is displayed when it shouldn't.
+    $field = islandora_solr_metadata_get_fields($configuration_id['configuration_id'], TRUE, TRUE);
     $db_fields = array_merge($db_fields, $field);
   }
   foreach ($db_fields as $solr_field => $value) {
@@ -74,6 +84,7 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
       'value' => array(),
       'hyperlink' => $value['hyperlink'],
       'weight' => $value['weight'],
+      'date_format' => $value['date_format'],
     );
   }
 
@@ -172,6 +183,15 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
         }
         // Trim off any extra values.
         $value = array_filter(array_map('trim', $value));
+
+        // See if we have date formatting to apply.
+        if (isset($solr_fields[$solr_field]['date_format']) && $solr_fields[$solr_field]['date_format']) {
+          foreach ($value as &$date_value) {
+            $date_value = format_date(strtotime($date_value), 'custom', $solr_fields[$solr_field]['date_format'], 'UTC');
+          }
+          unset($date_value);
+        }
+
         // Make hyperlinks out of what we need to.
         if (isset($solr_fields[$solr_field]['hyperlink']) && $solr_fields[$solr_field]['hyperlink']) {
           module_load_include('inc', 'islandora_solr_search', 'includes/utilities');
