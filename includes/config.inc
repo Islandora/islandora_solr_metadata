@@ -90,12 +90,18 @@ function islandora_solr_metadata_config_form($form, &$form_state, $configuration
       $field = $form_state['triggering_element']['#field'];
       // Get dialog values from recent dialog submit.
       $dialog_values = $form_state['input']['_dialog_values'] = json_decode($form_state['input']['_dialog_values'], TRUE);
+      $structured_data = array(
+        'schema_location' => $dialog_values['schema_location'],
+        'namespace' => $dialog_values['namespace'],
+        'value' => $dialog_values['value'],
+      );
       // Save the dialog values in the form state.
       $form_state['solr_field_settings'][$field['solr_field']] = array(
         'display_label' => $dialog_values['display_label'],
         'hyperlink' => empty($dialog_values['hyperlink']) ? 0 : 1,
         'date_format' => empty($dialog_values['date_format']) ? NULL : $dialog_values['date_format'],
         'permissions' => $dialog_values['permissions'],
+        'structured_data' => $structured_data,
       );
     }
   }
@@ -302,6 +308,7 @@ function islandora_solr_metadata_config_form($form, &$form_state, $configuration
         'hyperlink' => isset($values['hyperlink']) ? $values['hyperlink'] : 0,
         'date_format' => isset($values['date_format']) ? $values['date_format'] : NULL,
         'permissions' => isset($values['permissions']) ? $values['permissions'] : array(),
+        'structured_data' => isset($values['structured_data']) ? $values['structured_data'] : NULL,
       );
     }
   }
@@ -720,6 +727,32 @@ function islandora_solr_metadata_configure_field_form($form, &$form_state, $vari
     '#default_value' => isset($field['hyperlink']) ? $field['hyperlink'] : 0,
     '#weight' => 0,
   );
+  $form['options']['structured_data'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Structured Data'),
+    '#description' => t('Used for SEO and linked data by appending into the markup when rendered. Note all fields must be filled out or the values will be ignored to not form incomplete structured data.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => 2,
+  );
+  $form['options']['structured_data']['schema_location'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Schema Location'),
+    '#default_value' => isset($field['structured_data']['schema_location']) ? $field['structured_data']['schema_location'] : '',
+    '#description' => t('The location of the schema. For example, http://purl.org/dc/terms/ for dcterms.'),
+  );
+  $form['options']['structured_data']['namespace'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Namespace'),
+    '#default_value' => isset($field['structured_data']['namespace']) ? $field['structured_data']['namespace'] : '',
+    '#description' => t('The namespace for structured data. For example, dcterms for dcterms.'),
+  );
+  $form['options']['structured_data']['value'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Value'),
+    '#default_value' => isset($field['structured_data']['value']) ? $field['structured_data']['value'] : '',
+    '#description' => t('The property value for the structured data. For example, title for dcterms:title.'),
+  );
   $values = array(
     'permissions' => $field['permissions'],
   );
@@ -730,6 +763,7 @@ function islandora_solr_metadata_configure_field_form($form, &$form_state, $vari
       '#title' => t('Date format'),
       '#default_value' => isset($field['date_format']) ? $field['date_format'] : '',
       '#description' => t('The format of the date, as it will be displayed in the search results. Use <a href="!url" target="_blank">PHP date()</a> formatting.', array('!url' => 'http://php.net/manual/function.date.php')),
+      '#weight' => 0,
     );
   }
   islandora_solr_metadata_append_permissions_and_actions($values, $form);

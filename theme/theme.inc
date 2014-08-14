@@ -61,22 +61,32 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
   $db_fields = array();
   $solr_fields =& $variables['solr_fields'];
   $associations = islandora_solr_metadata_get_associations_by_cmodels($object->models);
-
+  $structured_data_schemas = array();
   foreach ($associations as $configuration_id) {
     // @TODO: How do we handle the case where there is only one field configured
-    // but it gets stripped away? Looks like Solr makes -two- DB calls and see
-    // if they are equivalent, could do that? Probably not the best probably
-    // just filter out down below somehow?
-
-    // @TODO: Make the process which displays a warning to the user better as
-    // currently f there are no fields defined or if the above condition is true
-    // the warning is displayed when it shouldn't.
+    // but it gets stripped away via permissions?
     $field = islandora_solr_metadata_get_fields($configuration_id['configuration_id'], TRUE, TRUE);
     $db_fields = array_merge($db_fields, $field);
   }
   foreach ($db_fields as $solr_field => $value) {
     if (isset($solr_fields[$solr_field])) {
       continue;
+    }
+    // Handle structured data.
+    $structured_data = FALSE;
+    // Require all three before we render up structured data.
+    if (!empty($value['structured_data']['schema_location']) && !empty($value['structured_data']['namespace']) && !empty($value['structured_data']['value'])) {
+      // Render up the property so it's easier on the template end.
+      $structured_data = format_string('property="@namespace:@value"', array(
+        '@namespace' => $value['structured_data']['namespace'],
+        '@value' => $value['structured_data']['value'],
+      ));
+      if (!isset($structured_data_namespaces[$value['structured_data']['namespace']])) {
+        $structured_data_schemas[$value['structured_data']['namespace']] = format_string('xmlns:@namespace="@location"', array(
+          '@namespace' => $value['structured_data']['namespace'],
+          '@location' => $value['structured_data']['schema_location'],
+        ));
+      }
     }
     // Make an array for use later on.
     $solr_fields[$solr_field] = array(
@@ -85,9 +95,10 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
       'hyperlink' => $value['hyperlink'],
       'weight' => $value['weight'],
       'date_format' => $value['date_format'],
+      'structured_data' => $structured_data,
     );
   }
-
+  $variables['structured_data_schemas'] = empty($structured_data_schemas) ? FALSE : implode(' ', $structured_data_schemas);
   $variables['parent_collections'] = islandora_get_parents_from_rels_ext($object);
 }
 

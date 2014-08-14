@@ -183,8 +183,8 @@ function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE
   }
   $fields_to_filter = $fields;
   foreach ($fields_to_filter as $key => $field) {
-
-    $fields[$key]['permissions'] = unserialize($field['permissions']);
+    $fields[$key]['structured_data'] = unserialize($field['structured_data']);
+    $fields[$key]['permissions'] = $field['permissions'] ? unserialize($field['permissions']) : array();
     // If the user doesn't have access let's filter this field now.
     if ($filtered) {
       $filtered_field = islandora_solr_metadata_filter_field($field);
@@ -381,6 +381,7 @@ function islandora_solr_metadata_add_fields($configuration_id, $fields) {
       'hyperlink' => $field['hyperlink'],
       'date_format' => $field['date_format'],
       'permissions' => serialize($field['permissions']),
+      'structured_data' => serialize($field['structured_data']),
       'weight' => $field['weight'],
     ));
   }
@@ -429,8 +430,11 @@ function islandora_solr_metadata_update_fields($configuration_id, $fields) {
         'weight' => $field['weight'],
         'display_label' => $field['display_label'],
         'hyperlink' => $field['hyperlink'],
-        'date_format' => $field['date_format'],
-        'permissions' => serialize($field['permissions']),
+        // Need the conditions to handle the case where we have legacy configs
+        // that get re-submitted without making any changes.
+        'date_format' => isset($field['date_format']) ? $field['date_format'] : NULL,
+        'permissions' => isset($field['permissions']) ? serialize($field['permissions']) : NULL,
+        'structured_data' => isset($field['structured_data']) ? serialize($field['structured_data']) : NULL,
       ))
       ->condition('solr_field', $field['solr_field'])
       ->condition('configuration_id', $configuration_id)
