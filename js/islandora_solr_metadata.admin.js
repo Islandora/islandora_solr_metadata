@@ -10,7 +10,7 @@
             $(".islandora-solr-metadata-configure-link").each(function () {
                 if (!$(this).hasClass('processed')) {
                     $('.islandora-solr-metadata-configure-link').click(function() {
-                        $(this).parent().next('td').find('input').trigger('click');
+                        $(this).parent('.islandora-solr-metadata-operations').next('td').find('input').trigger('click');
                         return false;
                     });
                     $(".islandora-solr-metadata-configure-link").addClass('processed');

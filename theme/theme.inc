@@ -19,9 +19,9 @@ function theme_islandora_solr_metadata_management_table(array $variables) {
         drupal_render($row['remove_field']),
         drupal_render($row['solr_field_markup']),
         drupal_render($row['weight']),
-        drupal_render($row['configure']),
-        drupal_render($row['configure_button']),
-        drupal_render($row['dialog_button']),
+        array('data' => drupal_render($row['configure']), 'class' => 'islandora-solr-metadata-operations'),
+        array('data' => drupal_render($row['configure_button']), 'class' => 'islandora-solr-metadata-operations'),
+        array('data' => drupal_render($row['dialog_button']), 'class' => 'islandora-solr-metadata-operations'),
       ),
       'class' => array('draggable'),
     );
@@ -95,7 +95,8 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
       'hyperlink' => $value['hyperlink'],
       'weight' => $value['weight'],
       'date_format' => $value['date_format'],
-      'structured_data' => $structured_data,
+      'structured_data_property' => $structured_data,
+      'structured_data_content' => FALSE,
     );
   }
   $variables['structured_data_schemas'] = empty($structured_data_schemas) ? FALSE : implode(' ', $structured_data_schemas);
@@ -194,6 +195,13 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
         }
         // Trim off any extra values.
         $value = array_filter(array_map('trim', $value));
+
+        // Add to structured data content if we need to.
+        if ($solr_fields[$solr_field]['structured_data_property']) {
+          $solr_fields[$solr_field]['structured_data_content'] = format_string('content="@value"', array(
+            '@value' => implode("\n", $value),
+          ));
+        }
 
         // See if we have date formatting to apply.
         if (isset($solr_fields[$solr_field]['date_format']) && $solr_fields[$solr_field]['date_format']) {

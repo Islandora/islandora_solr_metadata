@@ -26,7 +26,7 @@
     <dl <?php print $structured_data_schemas; ?> class="islandora-inline-metadata islandora-metadata-fields">
       <?php $row_field = 0; ?>
       <?php foreach($solr_fields as $value): ?>
-        <dt class="<?php print $row_field == 0 ? ' first' : ''; ?>" <?php print $value['structured_data']; ?>>
+        <dt class="<?php print $row_field == 0 ? ' first' : ''; ?>" <?php print $value['structured_data_property']; ?> <?php print $value['structured_data_content']; ?>>
           <?php print $value['display_label']; ?>
         </dt>
         <dd class="<?php print $row_field == 0 ? ' first' : ''; ?>">
