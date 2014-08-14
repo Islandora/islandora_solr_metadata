@@ -184,7 +184,7 @@ function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE
   $fields_to_filter = $fields;
   foreach ($fields_to_filter as $key => $field) {
     $fields[$key]['structured_data'] = unserialize($field['structured_data']);
-    $fields[$key]['permissions'] = $field['permissions'] ? unserialize($field['permissions']) : array();
+    $fields[$key]['permissions'] = $field['permissions'] ? unserialize($field['permissions']) : FALSE;
     // If the user doesn't have access let's filter this field now.
     if ($filtered) {
       $filtered_field = islandora_solr_metadata_filter_field($field);
@@ -217,7 +217,9 @@ function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE
 function islandora_solr_metadata_filter_field($field) {
   global $user;
 
-  if ($user->uid == 1) {
+  // User 1 always will get everything, or if a legacy object has not been
+  // updated yet allow it.
+  if ($user->uid == 1 || !$field['permissions']) {
     return $field;
   }
 
