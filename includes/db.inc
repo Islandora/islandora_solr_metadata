@@ -219,11 +219,12 @@ function islandora_solr_metadata_filter_field($field) {
 
   // User 1 always will get everything, or if a legacy object has not been
   // updated yet allow it.
-  if ($user->uid == 1 || !$field['permissions'] || empty($field['permissions'])) {
+  $permissions = unserialize($field['permissions']);
+  if ($user->uid == 1 || !$permissions || empty($permissions)) {
     return $field;
   }
 
-  return array_intersect(unserialize($field['permissions']), array_keys($user->roles));
+  return array_intersect($permissions, array_keys($user->roles));
 }
 /**
  * Get the name for the given configuration.
