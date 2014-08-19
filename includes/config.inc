@@ -18,7 +18,6 @@
  *   An array representing the configuration form.
  */
 function islandora_solr_metadata_config_form($form, &$form_state, $configuration_id) {
-  drupal_add_library('system', 'ui.dialog');
   module_load_include('inc', 'islandora', 'includes/content_model.autocomplete');
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   $field_to_add = FALSE;
@@ -100,7 +99,7 @@ function islandora_solr_metadata_config_form($form, &$form_state, $configuration
         'display_label' => $dialog_values['display_label'],
         'hyperlink' => empty($dialog_values['hyperlink']) ? 0 : 1,
         'date_format' => empty($dialog_values['date_format']) ? NULL : $dialog_values['date_format'],
-        'permissions' => $dialog_values['permissions'],
+        'permissions' => empty($dialog_values['enable_permissions']) ? 0 : $dialog_values['permissions'],
         'structured_data' => $structured_data,
       );
     }
@@ -108,6 +107,11 @@ function islandora_solr_metadata_config_form($form, &$form_state, $configuration
   $form = array(
     '#tree' => TRUE,
     '#attached' => array(
+      'library' => array(
+        array(
+          'system', 'ui.dialog',
+        ),
+      ),
       'js' => array(
         drupal_get_path('module', 'islandora_solr_metadata') . '/js/islandora_solr_metadata.admin.js',
       ),
@@ -626,7 +630,9 @@ function islandora_solr_metadata_admin_settings_field_configure($form, &$form_st
   // Open dialog.
   $commands[] = ajax_command_invoke('#islandora-solr-metadata-admin-dialog', 'dialog', array('open'));
   // Dialog title.
-  $title = t('Configure field:') . ' ' . $variables['values']['solr_field'];
+  $title = t('Configure field: @field', array(
+    '@field' => $variables['values']['solr_field'],
+  ));
   $commands[] = ajax_command_invoke('#islandora-solr-metadata-admin-dialog-title', 'html', array($title));
   // Dialog body.
   $form = drupal_get_form('islandora_solr_metadata_configure_field_form', $variables);
@@ -718,15 +724,15 @@ function islandora_solr_metadata_configure_field_form($form, &$form_state, $vari
   );
   $form['options']['hyperlink'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Hyperlink?'),
-    '#description' => t('Link this field to Solr search results?'),
+    '#title' => t('Hyperlink'),
+    '#description' => t('Link this field to Solr search results.'),
     '#default_value' => isset($field['hyperlink']) ? $field['hyperlink'] : 0,
     '#weight' => 0,
   );
   $form['options']['structured_data'] = array(
     '#type' => 'fieldset',
     '#title' => t('Structured Data'),
-    '#description' => t('Used for SEO and linked data by appending into the markup when rendered. Note all fields must be filled out or the values will be ignored to not form incomplete structured data.'),
+    '#description' => t('Note: If this feature is used, all fields must be filled out; otherwise, any value entered will be ignored to avoid forming incomplete structured data tags.'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     '#weight' => 2,
@@ -781,10 +787,11 @@ function islandora_solr_metadata_configure_field_form($form, &$form_state, $vari
 function islandora_solr_metadata_append_permissions_and_actions($values, &$form) {
   module_load_include('inc', 'islandora_solr', 'includes/admin');
   $permissions = isset($values['permissions']) ? $values['permissions'] : array();
+
   // Let's re-use some Solr's code cause we can.
   $permissions_disable = _islandora_solr_permissions_disable();
   $permissions_default = _islandora_solr_permissions_default();
-  $form['options']['permissions_fieldset'] = islandora_solr_get_admin_permissions_fieldset($permissions, $permissions_default, $permissions_disable);
+  $form['options']['permissions_fieldset'] = islandora_solr_get_admin_permissions_fieldset($permissions, $permissions_default, $permissions_disable, FALSE);
 
   $form['actions'] = array(
     '#type' => 'container',

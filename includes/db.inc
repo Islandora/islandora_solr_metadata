@@ -187,7 +187,7 @@ function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE
     $fields[$key]['permissions'] = $field['permissions'] ? unserialize($field['permissions']) : FALSE;
     // If the user doesn't have access let's filter this field now.
     if ($filtered) {
-      $filtered_field = islandora_solr_metadata_filter_field($field);
+      $filtered_field = islandora_solr_metadata_filter_field_access($field);
       if (!$filtered_field) {
         unset($fields[$key]);
       }
@@ -210,11 +210,11 @@ function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE
  *   - weight
  *   - solr_field
  *
- * @return array
- *   The field if the user is super, an intersection of permissions and the
- *   current user's roles otherwise.
+ * @return bool
+ *   TRUE if the user is a super or has an intersection of permissions of the
+ *   current user's roles and the defined roles, FALSE otherwise.
  */
-function islandora_solr_metadata_filter_field($field) {
+function islandora_solr_metadata_filter_field_access($field) {
   global $user;
 
   // User 1 always will get everything, or if a legacy object has not been
@@ -383,7 +383,7 @@ function islandora_solr_metadata_add_fields($configuration_id, $fields) {
       'display_label' => $field['display_label'],
       'hyperlink' => $field['hyperlink'],
       'date_format' => $field['date_format'],
-      'permissions' => serialize($field['permissions']),
+      'permissions' => isset($field['permissions']) ? serialize($field['permissions']) : NULL,
       'structured_data' => serialize($field['structured_data']),
       'weight' => $field['weight'],
     ));

@@ -77,16 +77,15 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
     // Require all three before we render up structured data.
     if (!empty($value['structured_data']['schema_location']) && !empty($value['structured_data']['namespace']) && !empty($value['structured_data']['value'])) {
       // Render up the property so it's easier on the template end.
-      $structured_data = format_string('property="@namespace:@value"', array(
-        '@namespace' => $value['structured_data']['namespace'],
-        '@value' => $value['structured_data']['value'],
-      ));
-      if (!isset($structured_data_namespaces[$value['structured_data']['namespace']])) {
-        $structured_data_schemas[$value['structured_data']['namespace']] = format_string('xmlns:@namespace="@location"', array(
-          '@namespace' => $value['structured_data']['namespace'],
-          '@location' => $value['structured_data']['schema_location'],
-        ));
-      }
+      $structured_data = array(
+        'property' => array(
+          "{$value['structured_data']['namespace']}:{$value['structured_data']['value']}",
+        ),
+      );
+      $namespace = check_plain($value['structured_data']['namespace']);
+      $structured_data_schemas += array(
+        "xmlns:$namespace" => $value['structured_data']['schema_location'],
+      );
     }
     // Make an array for use later on.
     $solr_fields[$solr_field] = array(
@@ -99,7 +98,7 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
       'structured_data_content' => FALSE,
     );
   }
-  $variables['structured_data_schemas'] = empty($structured_data_schemas) ? FALSE : implode(' ', $structured_data_schemas);
+  $variables['structured_data_schemas'] = $structured_data_schemas;
   $variables['parent_collections'] = islandora_get_parents_from_rels_ext($object);
 }
 
@@ -112,6 +111,12 @@ function template_process_islandora_solr_metadata_display(array &$variables) {
     '@id' => $variables['islandora_object']->id,
     '!reloading' => '<a href="" onclick="window.location.reload(true)">' . t('reloading') . '</a>',
   ));
+  $variables['structured_data_schemas'] = drupal_attributes($variables['structured_data_schemas']);
+  foreach ($variables['solr_fields'] as &$solr_field) {
+    if ($solr_field['structured_data_property']) {
+      $solr_field['structured_data_property'] = drupal_attributes($solr_field['structured_data_property']);
+    }
+  }
 }
 
 /**

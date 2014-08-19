@@ -150,4 +150,10 @@
         Drupal.islandoraSolrMetadata.resizeModal();
     };
 
+    var oldupdate = Drupal.states.Dependent.prototype.update;
+    Drupal.states.Dependent.prototype.update = function (selector, state, value) {
+        oldupdate.call(this, selector, state, value);
+        Drupal.islandoraSolrMetadata.resizeModal();
+    }
+
 })(jQuery);
