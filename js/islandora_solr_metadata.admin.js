@@ -19,6 +19,8 @@
         }
     };
 
+    var oldupdate = null;
+
     // function for the  dialog box
     Drupal.behaviors.islandoraSolrMetadataDialog = {
         attach: function(context, settings) {
@@ -34,6 +36,19 @@
                 'height': 500,
                 'draggable': false
             });
+
+            if (oldupdate == null && typeof Drupal.states != 'undefined') {
+              oldupdate = Drupal.states.Dependent.prototype.update;
+              Drupal.states.Dependent.prototype.update = function (selector, state, value) {
+                oldupdate.call(this, selector, state, value);
+                var modal_id = '#islandora-solr-metadata-admin-dialog';
+                var dependent = this.element.closest(modal_id);
+                var dependee = dialog_area.find(selector);
+                if ((dependent.length + dependee.length) > 0) {
+                  Drupal.islandoraSolrMetadata.resizeModal();
+                }
+              }
+            }
         }
     };
 
@@ -149,11 +164,4 @@
     $.fn.islandoraSolrMetadataResizeModal = function() {
         Drupal.islandoraSolrMetadata.resizeModal();
     };
-
-    var oldupdate = Drupal.states.Dependent.prototype.update;
-    Drupal.states.Dependent.prototype.update = function (selector, state, value) {
-        oldupdate.call(this, selector, state, value);
-        Drupal.islandoraSolrMetadata.resizeModal();
-    }
-
 })(jQuery);
