@@ -94,8 +94,7 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
       'hyperlink' => $value['hyperlink'],
       'weight' => $value['weight'],
       'date_format' => $value['date_format'],
-      'structured_data_property' => $structured_data,
-      'structured_data_content' => FALSE,
+      'structured_data' => $structured_data,
     );
   }
   $variables['structured_data_schemas'] = $structured_data_schemas;
@@ -113,8 +112,8 @@ function template_process_islandora_solr_metadata_display(array &$variables) {
   ));
   $variables['structured_data_schemas'] = drupal_attributes($variables['structured_data_schemas']);
   foreach ($variables['solr_fields'] as &$solr_field) {
-    if ($solr_field['structured_data_property']) {
-      $solr_field['structured_data_property'] = drupal_attributes($solr_field['structured_data_property']);
+    if ($solr_field['structured_data']) {
+      $solr_field['structured_data'] = drupal_attributes($solr_field['structured_data']);
     }
   }
 }
@@ -202,21 +201,28 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
         $value = array_filter(array_map('trim', $value));
 
         // Add to structured data content if we need to.
-        if ($solr_fields[$solr_field]['structured_data_property']) {
-          $solr_fields[$solr_field]['structured_data_content'] = format_string('content="@value"', array(
-            '@value' => implode("\n", $value),
-          ));
-        }
-
-        // See if we have date formatting to apply.
-        if (isset($solr_fields[$solr_field]['date_format']) && $solr_fields[$solr_field]['date_format']) {
-          foreach ($value as &$date_value) {
-            $date_value = format_date(strtotime($date_value), 'custom', $solr_fields[$solr_field]['date_format'], 'UTC');
+        if ($solr_fields[$solr_field]['structured_data']) {
+          if (variable_get('islandora_solr_metadata_dedup_values', FALSE)) {
+            $value = array_unique($value);
           }
-          unset($date_value);
+          if (variable_get('islandora_solr_metadata_omit_empty_values', FALSE)) {
+            $filter_function = function ($field_info) {
+              return !empty($field_info['value']);
+            };
+            $value = array_filter($value, $filter_function);
+          }
+          if (isset($solr_fields[$solr_field]['date_format']) && $solr_fields[$solr_field]['date_format']) {
+            foreach ($value as &$val) {
+              $val = format_date(strtotime($val), 'custom', $solr_fields[$solr_field]['date_format'], 'UTC');
+            }
+            unset($val);
+          }
+          $solr_fields[$solr_field]['structured_data'] += array(
+            'content' => $value,
+          );
         }
 
-        // Make hyperlinks out of what we need to.
+        // Make hyperlinks and date format what we need to.
         if (isset($solr_fields[$solr_field]['hyperlink']) && $solr_fields[$solr_field]['hyperlink']) {
           module_load_include('inc', 'islandora_solr_search', 'includes/utilities');
           foreach ($value as &$search_value) {
@@ -224,9 +230,18 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
               '!field' => $solr_field,
               '!value' => islandora_solr_lesser_escape($search_value),
             ));
+            if (isset($solr_fields[$solr_field]['date_format']) && $solr_fields[$solr_field]['date_format']) {
+              $search_value = format_date(strtotime($search_value), 'custom', $solr_fields[$solr_field]['date_format'], 'UTC');
+            }
             $search_value = l($search_value, "islandora/search/$solr_query");
           }
           unset($search_value);
+        }
+        elseif (isset($solr_fields[$solr_field]['date_format']) && $solr_fields[$solr_field]['date_format']) {
+          foreach ($value as &$date_value) {
+            $date_value = format_date(strtotime($date_value), 'custom', $solr_fields[$solr_field]['date_format'], 'UTC');
+          }
+          unset($date_value);
         }
 
         $solr_fields[$solr_field]['value'] = $value;
