@@ -158,4 +158,3 @@ function islandora_solr_metadata_update_7101() {
     'description' => 'A serialized array containing a namespace, prefix and value to be used for marking up data for SEO.',
   ));
 }
-
