@@ -18,10 +18,9 @@ function theme_islandora_solr_metadata_management_table(array $variables) {
       'data' => array(
         drupal_render($row['remove_field']),
         drupal_render($row['solr_field_markup']),
+        drupal_render($row['display_label']),
+        drupal_render($row['hyperlink']),
         drupal_render($row['weight']),
-        array('data' => drupal_render($row['configure']), 'class' => 'islandora-solr-metadata-operations'),
-        array('data' => drupal_render($row['configure_button']), 'class' => 'islandora-solr-metadata-operations'),
-        array('data' => drupal_render($row['dialog_button']), 'class' => 'islandora-solr-metadata-operations'),
       ),
       'class' => array('draggable'),
     );
@@ -52,7 +51,6 @@ function theme_islandora_solr_metadata_management_table(array $variables) {
  */
 function template_preprocess_islandora_solr_metadata_display(array &$variables) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
-  module_load_include('inc', 'islandora_solr', 'includes/db');
   module_load_include('inc', 'islandora', 'includes/utilities');
   drupal_add_js('misc/form.js');
   drupal_add_js('misc/collapse.js');
@@ -61,31 +59,14 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
   $db_fields = array();
   $solr_fields =& $variables['solr_fields'];
   $associations = islandora_solr_metadata_get_associations_by_cmodels($object->models);
-  $structured_data_schemas = array();
+
   foreach ($associations as $configuration_id) {
-    // @TODO: How do we handle the case where there is only one field configured
-    // but it gets stripped away via permissions?
-    $field = islandora_solr_metadata_get_fields($configuration_id['configuration_id'], TRUE, TRUE);
+    $field = islandora_solr_metadata_get_fields($configuration_id['configuration_id']);
     $db_fields = array_merge($db_fields, $field);
   }
   foreach ($db_fields as $solr_field => $value) {
     if (isset($solr_fields[$solr_field])) {
       continue;
-    }
-    // Handle structured data.
-    $structured_data = FALSE;
-    // Require all three before we render up structured data.
-    if (!empty($value['structured_data']['schema_location']) && !empty($value['structured_data']['namespace']) && !empty($value['structured_data']['value'])) {
-      // Render up the property so it's easier on the template end.
-      $structured_data = array(
-        'property' => array(
-          "{$value['structured_data']['namespace']}:{$value['structured_data']['value']}",
-        ),
-      );
-      $namespace = check_plain($value['structured_data']['namespace']);
-      $structured_data_schemas += array(
-        "xmlns:$namespace" => $value['structured_data']['schema_location'],
-      );
     }
     // Make an array for use later on.
     $solr_fields[$solr_field] = array(
@@ -93,11 +74,9 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
       'value' => array(),
       'hyperlink' => $value['hyperlink'],
       'weight' => $value['weight'],
-      'date_format' => $value['date_format'],
-      'structured_data' => $structured_data,
     );
   }
-  $variables['structured_data_schemas'] = $structured_data_schemas;
+
   $variables['parent_collections'] = islandora_get_parents_from_rels_ext($object);
 }
 
@@ -110,12 +89,6 @@ function template_process_islandora_solr_metadata_display(array &$variables) {
     '@id' => $variables['islandora_object']->id,
     '!reloading' => '<a href="" onclick="window.location.reload(true)">' . t('reloading') . '</a>',
   ));
-  $variables['structured_data_schemas'] = drupal_attributes($variables['structured_data_schemas']);
-  foreach ($variables['solr_fields'] as &$solr_field) {
-    if ($solr_field['structured_data']) {
-      $solr_field['structured_data'] = drupal_attributes($solr_field['structured_data']);
-    }
-  }
 }
 
 /**
@@ -199,30 +172,7 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
         }
         // Trim off any extra values.
         $value = array_filter(array_map('trim', $value));
-
-        // Add to structured data content if we need to.
-        if ($solr_fields[$solr_field]['structured_data']) {
-          if (variable_get('islandora_solr_metadata_dedup_values', FALSE)) {
-            $value = array_unique($value);
-          }
-          if (variable_get('islandora_solr_metadata_omit_empty_values', FALSE)) {
-            $filter_function = function ($field_info) {
-              return !empty($field_info['value']);
-            };
-            $value = array_filter($value, $filter_function);
-          }
-          if (isset($solr_fields[$solr_field]['date_format']) && $solr_fields[$solr_field]['date_format']) {
-            foreach ($value as &$val) {
-              $val = format_date(strtotime($val), 'custom', $solr_fields[$solr_field]['date_format'], 'UTC');
-            }
-            unset($val);
-          }
-          $solr_fields[$solr_field]['structured_data'] += array(
-            'content' => $value,
-          );
-        }
-
-        // Make hyperlinks and date format what we need to.
+        // Make hyperlinks out of what we need to.
         if (isset($solr_fields[$solr_field]['hyperlink']) && $solr_fields[$solr_field]['hyperlink']) {
           module_load_include('inc', 'islandora_solr_search', 'includes/utilities');
           foreach ($value as &$search_value) {
@@ -230,18 +180,9 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
               '!field' => $solr_field,
               '!value' => islandora_solr_lesser_escape($search_value),
             ));
-            if (isset($solr_fields[$solr_field]['date_format']) && $solr_fields[$solr_field]['date_format']) {
-              $search_value = format_date(strtotime($search_value), 'custom', $solr_fields[$solr_field]['date_format'], 'UTC');
-            }
             $search_value = l($search_value, "islandora/search/$solr_query");
           }
           unset($search_value);
-        }
-        elseif (isset($solr_fields[$solr_field]['date_format']) && $solr_fields[$solr_field]['date_format']) {
-          foreach ($value as &$date_value) {
-            $date_value = format_date(strtotime($date_value), 'custom', $solr_fields[$solr_field]['date_format'], 'UTC');
-          }
-          unset($date_value);
         }
 
         $solr_fields[$solr_field]['value'] = $value;

@@ -154,21 +154,16 @@ function islandora_solr_metadata_add_configuration($configuration_name, $machine
  * @param bool $translate
  *   Whether or not to attempt to translate the "display labels" with i18n.
  *   Defaults to TRUE.
- * @param bool $filtered
- *   Whether to filter out results based upon security restrictions.
  *
  * @return array
  *   An associative array of associative arrays, representing Solr fields
  *   mapped to the details about the given field, including:
  *   - configuration_id
  *   - display_label
- *   - hyperlink
- *   - permissions
- *   - date_format
  *   - weight
  *   - solr_field
  */
-function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE, $filtered = FALSE) {
+function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE) {
   $result = db_query('SELECT * FROM {islandora_solr_metadata_fields} WHERE configuration_id = :configuration_id ORDER BY weight', array(':configuration_id' => $configuration_id));
 
   $fields = $result->fetchAllAssoc('solr_field', PDO::FETCH_ASSOC);
@@ -181,51 +176,9 @@ function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE
     // XXX: foreach with references can be silly.
     unset($field_info);
   }
-  $fields_to_filter = $fields;
-  foreach ($fields_to_filter as $key => $field) {
-    $fields[$key]['structured_data'] = unserialize($field['structured_data']);
-    $fields[$key]['permissions'] = $field['permissions'] ? unserialize($field['permissions']) : FALSE;
-    // If the user doesn't have access let's filter this field now.
-    if ($filtered) {
-      $filtered_field = islandora_solr_metadata_filter_field_access($field);
-      if (!$filtered_field) {
-        unset($fields[$key]);
-      }
-    }
-  }
-  unset($field);
   return $fields;
 }
 
-/**
- * Helper function to filter out fields based upon permissions.
- *
- * @param array $field
- *   An array representing a Solr Metadata configuration field containing:
- *   - configuration_id
- *   - display_label
- *   - hyperlink
- *   - permissions
- *   - date_format
- *   - weight
- *   - solr_field
- *
- * @return bool
- *   TRUE if the user is a super or has an intersection of permissions of the
- *   current user's roles and the defined roles, FALSE otherwise.
- */
-function islandora_solr_metadata_filter_field_access($field) {
-  global $user;
-
-  // User 1 always will get everything, or if a legacy object has not been
-  // updated yet allow it.
-  $permissions = unserialize($field['permissions']);
-  if ($user->uid == 1 || !$permissions || empty($permissions)) {
-    return $field;
-  }
-
-  return array_intersect($permissions, array_keys($user->roles));
-}
 /**
  * Get the name for the given configuration.
  *
@@ -370,8 +323,6 @@ function islandora_solr_metadata_add_fields($configuration_id, $fields) {
         'solr_field',
         'display_label',
         'hyperlink',
-        'date_format',
-        'permissions',
         'weight',
       )
     );
@@ -382,9 +333,6 @@ function islandora_solr_metadata_add_fields($configuration_id, $fields) {
       'solr_field' => $field['solr_field'],
       'display_label' => $field['display_label'],
       'hyperlink' => $field['hyperlink'],
-      'date_format' => $field['date_format'],
-      'permissions' => isset($field['permissions']) ? serialize($field['permissions']) : NULL,
-      'structured_data' => serialize($field['structured_data']),
       'weight' => $field['weight'],
     ));
   }
@@ -433,11 +381,6 @@ function islandora_solr_metadata_update_fields($configuration_id, $fields) {
         'weight' => $field['weight'],
         'display_label' => $field['display_label'],
         'hyperlink' => $field['hyperlink'],
-        // Need the conditions to handle the case where we have legacy configs
-        // that get re-submitted without making any changes.
-        'date_format' => isset($field['date_format']) ? $field['date_format'] : NULL,
-        'permissions' => isset($field['permissions']) ? serialize($field['permissions']) : NULL,
-        'structured_data' => isset($field['structured_data']) ? serialize($field['structured_data']) : NULL,
       ))
       ->condition('solr_field', $field['solr_field'])
       ->condition('configuration_id', $configuration_id)

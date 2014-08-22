@@ -23,10 +23,10 @@
 <fieldset <?php $print ? print('class="islandora islandora-metadata"') : print('class="islandora islandora-metadata collapsible collapsed"');?>>
   <legend><span class="fieldset-legend"><?php print t('Details'); ?></span></legend>
   <div class="fieldset-wrapper">
-    <dl <?php print $structured_data_schemas; ?> class="islandora-inline-metadata islandora-metadata-fields">
+    <dl xmlns:dcterms="http://purl.org/dc/terms/" class="islandora-inline-metadata islandora-metadata-fields">
       <?php $row_field = 0; ?>
       <?php foreach($solr_fields as $value): ?>
-        <dt class="<?php print $row_field == 0 ? ' first' : ''; ?>" <?php print $value['structured_data']; ?>>
+        <dt class="<?php print $row_field == 0 ? ' first' : ''; ?>">
           <?php print $value['display_label']; ?>
         </dt>
         <dd class="<?php print $row_field == 0 ? ' first' : ''; ?>">
