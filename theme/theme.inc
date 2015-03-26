@@ -178,7 +178,7 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
           foreach ($value as &$search_value) {
             $solr_query = format_string('!field:"!value"', array(
               '!field' => $solr_field,
-              '!value' => islandora_solr_lesser_escape($search_value),
+              '!value' => urlencode(islandora_solr_replace_slashes(islandora_solr_lesser_escape($search_value))),
             ));
             $search_value = l($search_value, "islandora/search/$solr_query");
           }
