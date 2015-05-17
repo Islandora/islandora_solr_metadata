@@ -58,7 +58,7 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
   $object = $variables['islandora_object'];
   $db_fields = array();
   $solr_fields =& $variables['solr_fields'];
-  $associations = islandora_solr_metadata_get_associations_by_cmodels($object->models);
+  $associations = $variables['associations'];
 
   foreach ($associations as $configuration_id) {
     $field = islandora_solr_metadata_get_fields($configuration_id['configuration_id']);
@@ -104,10 +104,10 @@ function template_process_islandora_solr_metadata_display(array &$variables) {
 function template_preprocess_islandora_solr_metadata_description(array &$variables) {
   $object = $variables['islandora_object'];
   $solr_fields =& $variables['solr_fields'];
+  $associations = $variables['associations'];
 
   $descriptions = array();
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
-  $associations = islandora_solr_metadata_get_associations_by_cmodels($object->models);
   foreach ($associations as $configuration_id) {
     $description = islandora_solr_metadata_retrieve_description($configuration_id['configuration_id']);
     if ($description['description_field'] !== NULL) {
