@@ -18,8 +18,7 @@ function theme_islandora_solr_metadata_management_table(array $variables) {
       'data' => array(
         drupal_render($row['remove_field']),
         drupal_render($row['solr_field_markup']),
-        drupal_render($row['display_label']),
-        drupal_render($row['hyperlink']),
+        drupal_render($row['operations']),
         drupal_render($row['weight']),
       ),
       'class' => array('draggable'),
@@ -69,11 +68,8 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
       continue;
     }
     // Make an array for use later on.
-    $solr_fields[$solr_field] = array(
-      'display_label' => $value['display_label'],
+    $solr_fields[$solr_field] = $value + array(
       'value' => array(),
-      'hyperlink' => $value['hyperlink'],
-      'weight' => $value['weight'],
     );
   }
 
@@ -154,6 +150,7 @@ function template_process_islandora_solr_metadata_description(array &$variables)
  *   FALSE.
  */
 function islandora_solr_metadata_query_fields($object, &$solr_fields) {
+  module_load_include('inc', 'islandora_solr', 'includes/utilities');
   if (!empty($solr_fields)) {
     $query_processor = new IslandoraSolrQueryProcessor();
     $query_processor->solrQuery = 'PID:"' . $object->id . '"';
@@ -166,26 +163,40 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
       $constrained_results = array_intersect_key($solr_results_doc, $solr_fields);
 
       foreach ($constrained_results as $solr_field => $value) {
+        $get_display_value = function ($original_value) use ($solr_field, $solr_fields) {
+          $value = $original_value;
+          $field_config = $solr_fields[$solr_field] + array(
+            'max_length' => 0,
+            'hyperlink' => 0,
+            'formatter' => NULL,
+          );
+          if ($field_config['max_length'] > 0) {
+            $value = truncate_utf8($value, $field_config['max_length'], TRUE, TRUE);
+          }
+          if (is_callable($field_config['formatter'])) {
+            $value = call_user_func($field_config['formatter'], $value);
+          }
+          if ($field_config['hyperlink'] == 1 && trim($value)) {
+            if (variable_get('islandora_solr_metadata_omit_empty_values', FALSE) && !trim($value)) {
+              // Avoid generating markup (throwing off the "empty" check).
+              // Will get stripped out later.
+              return;
+            }
+            $solr_query = format_string('!field:"!value"', array(
+              '!field' => $solr_field,
+              '!value' => urlencode(islandora_solr_replace_slashes(islandora_solr_lesser_escape($original_value))),
+            ));
+            return l($value, "islandora/search/$solr_query");
+          }
+          return $value;
+        };
+
         // Want the values in array form even if it's a single valued field.
         if (!is_array($value)) {
           $value = (array) $value;
         }
-        // Trim off any extra values.
-        $value = array_filter(array_map('trim', $value));
-        // Make hyperlinks out of what we need to.
-        if (isset($solr_fields[$solr_field]['hyperlink']) && $solr_fields[$solr_field]['hyperlink']) {
-          module_load_include('inc', 'islandora_solr_search', 'includes/utilities');
-          foreach ($value as &$search_value) {
-            $solr_query = format_string('!field:"!value"', array(
-              '!field' => $solr_field,
-              '!value' => urlencode(islandora_solr_replace_slashes(islandora_solr_lesser_escape($search_value))),
-            ));
-            $search_value = l($search_value, "islandora/search/$solr_query");
-          }
-          unset($search_value);
-        }
 
-        $solr_fields[$solr_field]['value'] = $value;
+        $solr_fields[$solr_field]['value'] = array_map($get_display_value, $value);
       }
 
       if (variable_get('islandora_solr_metadata_omit_empty_values', FALSE)) {
@@ -202,13 +213,6 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
         }
         unset($field);
       }
-
-      foreach ($solr_fields as &$field) {
-        if (isset($field['formatter']) && is_callable($field['formatter'])) {
-          $field['value'] = array_map($field['formatter'], $field['value']);
-        }
-      }
-      unset($field);
 
       uasort($solr_fields, 'drupal_sort_weight');
       return TRUE;

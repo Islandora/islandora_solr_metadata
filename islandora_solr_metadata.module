@@ -26,6 +26,15 @@ function islandora_solr_metadata_menu() {
     'access arguments' => array(5),
     'file' => 'includes/config.inc',
   );
+  $items['admin/islandora/search/islandora_solr_metadata/config/%/%'] = array(
+    'title callback' => 'islandora_solr_metadata_display_configuration_name',
+    'title arguments' => array(5),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_solr_metadata_config_field_form', 5, 6),
+    'access callback' => 'islandora_solr_metadata_access',
+    'access arguments' => array(5),
+    'file' => 'includes/config.inc',
+  );
   $items['admin/islandora/search/islandora_solr_metadata/config/delete/%'] = array(
     'title' => 'Delete display configuration',
     'page callback' => 'drupal_get_form',

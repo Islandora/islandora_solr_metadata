@@ -168,7 +168,16 @@ function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE
 
   $fields = $result->fetchAllAssoc('solr_field', PDO::FETCH_ASSOC);
   $deserialize_data = function ($field) {
+    // Merge unserialized blob into field array.
     $field += unserialize($field['data']);
+
+    // Add in defaults.
+    $field += array(
+      'display_label' => $field['solr_field'],
+      'hyperlink' => 0,
+      'max_length' => 0,
+    );
+
     return $field;
   };
   $fields = array_map($deserialize_data, $fields);
@@ -322,14 +331,12 @@ function islandora_solr_metadata_delete_content_models($configuration_id, $conte
  *   - solr_field
  */
 function islandora_solr_metadata_add_fields($configuration_id, $fields) {
-  $
   $query = db_insert('islandora_solr_metadata_fields')
     ->fields(array(
         'configuration_id',
         'solr_field',
-        'display_label',
-        'hyperlink',
         'weight',
+        'data',
       )
     );
 
@@ -337,9 +344,8 @@ function islandora_solr_metadata_add_fields($configuration_id, $fields) {
     $query->values(array(
       'configuration_id' => $configuration_id,
       'solr_field' => $field['solr_field'],
-      'display_label' => $field['display_label'],
-      'hyperlink' => $field['hyperlink'],
       'weight' => $field['weight'],
+      'data' => serialize(array_diff_key($field, islandora_solr_metadata_fields_non_data_fields())),
     ));
   }
   $query->execute();
