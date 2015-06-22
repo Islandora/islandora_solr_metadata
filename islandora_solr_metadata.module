@@ -27,8 +27,8 @@ function islandora_solr_metadata_menu() {
     'file' => 'includes/config.inc',
   );
   $items['admin/islandora/search/islandora_solr_metadata/config/%/%'] = array(
-    'title callback' => 'islandora_solr_metadata_display_configuration_name',
-    'title arguments' => array(5),
+    'title callback' => 'islandora_solr_metadata_display_field_configuration_name',
+    'title arguments' => array(5, 6),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_solr_metadata_config_field_form', 5, 6),
     'access callback' => 'islandora_solr_metadata_access',
@@ -143,7 +143,28 @@ function islandora_solr_metadata_features_api() {
 function islandora_solr_metadata_display_configuration_name($configuration_id) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   $configuration_name = islandora_solr_metadata_retrieve_configuration_name($configuration_id);
-  return format_string('@configuration_name display configuration', array('@configuration_name' => $configuration_name));
+  return t('@configuration_name display configuration', array(
+    '@configuration_name' => $configuration_name,
+  ));
+}
+
+/**
+ * Title callback for the field configuration display.
+ *
+ * @param int $configuration_id
+ *   The ID of the configuration we are retrieving the name of.
+ *
+ * @return string
+ *   The name of the configuration that is to be edited.
+ */
+function islandora_solr_metadata_display_field_configuration_name($configuration_id, $escaped_field_name) {
+  module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
+  module_load_include('inc', 'islandora_solr', 'includes/utilities');
+
+  $configuration_name = islandora_solr_metadata_retrieve_configuration_name($configuration_id);
+  return t('@field configuration', array(
+    '@field' => islandora_solr_restore_slashes($escaped_field_name),
+  ));
 }
 
 /**

@@ -483,11 +483,13 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
   $set['display_label'] = array(
     '#type' => 'textfield',
     '#title' => t('Display Label'),
+    '#description' => t('A human-readable label to display alongside values found for this field.'),
     '#default_value' => $get_default('display_label', $field_name),
   );
   $set['hyperlink'] = array(
     '#type' => 'checkbox',
     '#title' => t('Hyperlink?'),
+    '#description' => t('Should each value for this field be linked to a search to find objects with the value in this field?'),
     '#default_value' => $get_default('hyperlink', FALSE),
   );
   $set['max_length'] = array(
