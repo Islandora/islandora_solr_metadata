@@ -508,6 +508,16 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
 }
 
 /**
+ * Form validation handler; validate some values.
+ */
+function islandora_solr_metadata_config_field_form_validate(&$form, &$form_state) {
+  if ($form_state['values']['wrapper']['hyperlink'] && $form_state['values']['wrapper']['max_length'] > 0) {
+    form_error($form['wrapper']['hyperlink'], t('Either hyperlinking or truncation can be used, but not both together on the same field. Disable one.'));
+    form_error($form['wrapper']['max_length']);
+  }
+}
+
+/**
  * Form submission handler; save the configuration of the field.
  */
 function islandora_solr_metadata_config_field_form_submit(&$form, &$form_state) {
