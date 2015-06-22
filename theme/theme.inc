@@ -169,14 +169,13 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
             'hyperlink' => 0,
             'formatter' => NULL,
           );
-          ;
           if (($truncation = drupal_array_get_nested_value($field_config, array('truncation'))) && $truncation['max_length'] > 0) {
             $value = truncate_utf8($value, $truncation['max_length'], TRUE, TRUE);
             if ($value !== $original_value) {
               $mod_path = drupal_get_path('module', 'islandora_solr_metadata');
               drupal_add_js("$mod_path/js/truncation-toggle.js");
-              // XXX: Non-semantic use of ul/li due to later check_markup call. Neither span
-              // nor div seems to be allowed by default.
+              // XXX: Non-semantic use of ul/li due to later check_markup call.
+              // Neither span nor div seems to be allowed by default.
               return <<<EOM
 <ul class="toggle-wrapper">
   <li>$value <a class="toggler">Show more</a></li>
