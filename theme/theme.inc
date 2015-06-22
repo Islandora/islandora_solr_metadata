@@ -172,6 +172,18 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
           );
           if ($field_config['max_length'] > 0) {
             $value = truncate_utf8($value, $field_config['max_length'], TRUE, TRUE);
+            if ($value !== $original_value) {
+              $mod_path = drupal_get_path('module', 'islandora_solr_metadata');
+              drupal_add_js("$mod_path/js/truncation-toggle.js");
+// XXX: Non-semantic use of ul/li due to later check_markup call. Neither span
+// nor div seems to be allowed by default.
+              $value = <<<EOM
+<ul class="toggle-wrapper">
+  <li>$value <a class="toggler">Show more</a></li>
+  <li>$original_value <a class="toggler">Show less</a></li>
+</ul>
+EOM;
+            }
           }
           if (is_callable($field_config['formatter'])) {
             $value = call_user_func($field_config['formatter'], $value);
