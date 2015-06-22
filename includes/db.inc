@@ -175,7 +175,6 @@ function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE
     $field += array(
       'display_label' => $field['solr_field'],
       'hyperlink' => 0,
-      'max_length' => 0,
     );
 
     return $field;

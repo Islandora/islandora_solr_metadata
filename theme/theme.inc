@@ -166,12 +166,12 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
         $get_display_value = function ($original_value) use ($solr_field, $solr_fields) {
           $value = $original_value;
           $field_config = $solr_fields[$solr_field] + array(
-            'max_length' => 0,
             'hyperlink' => 0,
             'formatter' => NULL,
           );
-          if ($field_config['max_length'] > 0) {
-            $value = truncate_utf8($value, $field_config['max_length'], TRUE, TRUE);
+          ;
+          if (($truncation = drupal_array_get_nested_value($field_config, array('truncation'))) && $truncation['max_length'] > 0) {
+            $value = truncate_utf8($value, $truncation['max_length'], TRUE, TRUE);
             if ($value !== $original_value) {
               $mod_path = drupal_get_path('module', 'islandora_solr_metadata');
               drupal_add_js("$mod_path/js/truncation-toggle.js");

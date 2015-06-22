@@ -470,7 +470,9 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
       $fields = islandora_solr_metadata_get_fields($config_id);
       $field_info = $fields[$field_name];
     }
-    return isset($field_info[$value]) ? $field_info[$value] : $default;
+    $exists = FALSE;
+    $looked_up = drupal_array_get_nested_value($field_info, (array) $value, $exists);
+    return $exists ? $looked_up : $default;
   };
 
   $form['#tree'] = TRUE;
@@ -492,12 +494,33 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
     '#description' => t('Should each value for this field be linked to a search to find objects with the value in this field?'),
     '#default_value' => $get_default('hyperlink', FALSE),
   );
-  $set['max_length'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Max Length'),
-    '#description' => t('The field contents will be truncated to be at most this length (in characters) for display. 0 or less to disable truncation.'),
-    '#default_value' => $get_default('max_length', 0),
-    '#element_validate' => array('element_validate_integer'),
+  $set['truncation'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Truncation'),
+    'max_length' => array(
+      '#type' => 'textfield',
+      '#title' => t('Max Length'),
+      '#description' => t('The field contents will be truncated to be at most this length (in characters) for display. 0 or less to disable truncation.'),
+      '#default_value' => $get_default(array('truncation', 'max_length'), 0),
+      '#element_validate' => array('element_validate_integer'),
+    ),
+    'word_safe' => array(
+      '#type' => 'checkbox',
+      '#title' => t('Word-safe'),
+      '#description' => t('Attempt to truncate on a word boundary. See truncate_utf8() for more info.'),
+      '#default_value' => $get_default(array('truncation', 'word_safe'), FALSE),
+    ),
+    'ellipsis' => array(
+      '#type' => 'checkbox',
+      '#title' => t('Ellipsis'),
+      '#description' => t('Append ellipses when truncating occurs.'),
+      '#default_value' => $get_default(array('truncation', 'ellipsis'), FALSE),
+    ),
+    'min_wordsafe_length' => array(
+      '#type' => 'textfield',
+      '#title' => t('Minimum word-safe length'),
+      '#default_value' => $get_default(array('truncation', 'min_wordsafe_length'), 1),
+    ),
   );
 
   $form['submit'] = array(
@@ -511,9 +534,9 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
  * Form validation handler; validate some values.
  */
 function islandora_solr_metadata_config_field_form_validate(&$form, &$form_state) {
-  if ($form_state['values']['wrapper']['hyperlink'] && $form_state['values']['wrapper']['max_length'] > 0) {
+  if ($form_state['values']['wrapper']['hyperlink'] && $form_state['values']['wrapper']['truncation']['max_length'] > 0) {
     form_error($form['wrapper']['hyperlink'], t('Either hyperlinking or truncation can be used, but not both together on the same field. Disable one.'));
-    form_error($form['wrapper']['max_length']);
+    form_error($form['wrapper']['truncation']['max_length']);
   }
 }
 
