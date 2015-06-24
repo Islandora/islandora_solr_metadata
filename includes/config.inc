@@ -310,9 +310,6 @@ function islandora_solr_metadata_config_form_submit($form, $form_state) {
 
   if ($form_state['clicked_button']['#value'] == 'Save configuration') {
     // Grab existing entries first for comparison.
-    $ajaxy = function ($field) {
-      return isset($field['ajax-volatile']) && $field['ajax-volatile'];
-    };
     $remove_form_specifics = function ($field) {
       return array_diff_key($field, drupal_map_assoc(array(
         'ajax-volatile',
