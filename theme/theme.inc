@@ -178,8 +178,8 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
               // <br/>'s in the later check_markup.
               return implode('', array(
                 '<span class="toggle-wrapper">',
-                "<span>$value <a class='toggler'>Show more</a></span>",
-                "<span>$original_value <a class='toggler'>Show less</a></span>",
+                "<span>$value <a href='#' class='toggler'>Show more</a></span>",
+                "<span>$original_value <a href='#' class='toggler'>Show less</a></span>",
                 '</span>',
               ));
             }
