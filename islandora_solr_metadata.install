@@ -184,9 +184,10 @@ function islandora_solr_metadata_update_7102() {
  * Create a new input format to use for filtering.
  */
 function islandora_solr_metadata_update_7103() {
+  $t = get_t();
   $format = filter_format_load('filtered_html');
   $format->format = 'islandora_solr_metadata_filtered_html';
-  $format->name = t('Islandora Solr Metadata Filtered HTML');
+  $format->name = $t('Islandora Solr Metadata Filtered HTML');
   $format->filters = filter_list_format('filtered_html');
   foreach ($format->filters as $key => $filter) {
     $format->filters[$key] = (array) $filter;
@@ -210,9 +211,10 @@ function islandora_solr_metadata_update_7103() {
  * Implements hook_install().
  */
 function islandora_solr_metadata_install() {
+  $t = get_t();
   $format = filter_format_load('filtered_html');
   $format->format = 'islandora_solr_metadata_filtered_html';
-  $format->name = t('Islandora Solr Metadata Filtered HTML');
+  $format->name = $t('Islandora Solr Metadata Filtered HTML');
   $format->filters = filter_list_format('filtered_html');
   foreach ($format->filters as $key => $filter) {
     $format->filters[$key] = (array) $filter;
