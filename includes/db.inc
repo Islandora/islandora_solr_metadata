@@ -167,6 +167,19 @@ function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE
   $result = db_query('SELECT * FROM {islandora_solr_metadata_fields} WHERE configuration_id = :configuration_id ORDER BY weight', array(':configuration_id' => $configuration_id));
 
   $fields = $result->fetchAllAssoc('solr_field', PDO::FETCH_ASSOC);
+  $deserialize_data = function ($field) {
+    // Merge unserialized blob into field array.
+    $field += unserialize($field['data']);
+
+    // Add in defaults.
+    $field += array(
+      'display_label' => $field['solr_field'],
+      'hyperlink' => 0,
+    );
+
+    return $field;
+  };
+  $fields = array_map($deserialize_data, $fields);
 
   if ($translate && module_exists('i18n_string')) {
     foreach ($fields as $field => &$field_info) {
@@ -321,9 +334,8 @@ function islandora_solr_metadata_add_fields($configuration_id, $fields) {
     ->fields(array(
         'configuration_id',
         'solr_field',
-        'display_label',
-        'hyperlink',
         'weight',
+        'data',
       )
     );
 
@@ -331,9 +343,8 @@ function islandora_solr_metadata_add_fields($configuration_id, $fields) {
     $query->values(array(
       'configuration_id' => $configuration_id,
       'solr_field' => $field['solr_field'],
-      'display_label' => $field['display_label'],
-      'hyperlink' => $field['hyperlink'],
       'weight' => $field['weight'],
+      'data' => serialize(array_diff_key($field, islandora_solr_metadata_fields_non_data_fields())),
     ));
   }
   $query->execute();
@@ -375,12 +386,12 @@ function islandora_solr_metadata_delete_fields($configuration_id, $fields) {
  *   - solr_field
  */
 function islandora_solr_metadata_update_fields($configuration_id, $fields) {
+  $not_data = islandora_solr_metadata_fields_non_data_fields();
   foreach ($fields as $field) {
     db_update('islandora_solr_metadata_fields')
       ->fields(array(
         'weight' => $field['weight'],
-        'display_label' => $field['display_label'],
-        'hyperlink' => $field['hyperlink'],
+        'data' => serialize(array_diff_key($field, $not_data)),
       ))
       ->condition('solr_field', $field['solr_field'])
       ->condition('configuration_id', $configuration_id)
@@ -507,4 +518,15 @@ function islandora_solr_metadata_remove_i18n_description($id) {
     $i18n_id = islandora_solr_metadata_description_i18n_id($id);
     i18n_string_remove($i18n_id);
   }
+}
+
+/**
+ * Helper to list the actual columns of "islandora_solr_metadata_fields".
+ *
+ * That is to say, the values which are their own columns in the
+ * "islandora_solr_metadata_fields",
+ */
+function islandora_solr_metadata_fields_non_data_fields() {
+  $schema = drupal_get_schema('islandora_solr_metadata_fields');
+  return $schema['fields'];
 }

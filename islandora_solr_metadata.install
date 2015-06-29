@@ -60,37 +60,12 @@ function islandora_solr_metadata_schema() {
         'not null' => TRUE,
         'description' => 'The field name as indexed in Solr',
       ),
-      'display_label' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'description' => 'The display label of the field for output',
-      ),
-      'hyperlink' => array(
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'date_format' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => FALSE,
-        'description' => 'The date format used for dates.',
-      ),
-      'permissions' => array(
+      'data' => array(
         'type' => 'blob',
         'not null' => FALSE,
         'size' => 'big',
         'serialize' => TRUE,
         'description' => 'A serialized array of name value pairs that store permissions field settings.',
-      ),
-      'structured_data' => array(
-        'type' => 'blob',
-        'not null' => FALSE,
-        'size' => 'big',
-        'serialize' => TRUE,
-        'description' => 'A serialized array containing a namespace, prefix and value to be used for marking up data for SEO.',
       ),
       'weight' => array(
         'type' => 'int',
@@ -169,4 +144,92 @@ function islandora_solr_metadata_update_7101() {
     'serialize' => TRUE,
     'description' => 'A serialized array containing a namespace, prefix and value to be used for marking up data for SEO.',
   ));
+}
+
+/**
+ * Move columns into new blob.
+ */
+function islandora_solr_metadata_update_7102() {
+  $transaction = db_transaction();
+  db_add_field('islandora_solr_metadata_fields', 'data', array(
+    'type' => 'blob',
+    'not null' => FALSE,
+    'size' => 'big',
+    'serialize' => TRUE,
+    'description' => 'Serialized associative array with misc display parameters.',
+  ));
+  $fields_to_remove = drupal_map_assoc(array(
+      'display_label',
+      'hyperlink',
+      'date_format',
+      'permissions',
+      'structured_data',
+  ));
+  $results = db_select('islandora_solr_metadata_fields', 'f')
+    ->fields('f')
+    ->execute();
+  while ($result = $results->fetchAssoc()) {
+    db_update('islandora_solr_metadata_fields')
+      ->fields(array('data' => serialize(array_intersect_key($result, $fields_to_remove))))
+      ->condition('configuration_id', $result['configuration_id'])
+      ->condition('solr_field', $result['solr_field'])
+      ->execute();
+  }
+  foreach ($fields_to_remove as $field) {
+    db_drop_field('islandora_solr_metadata_fields', $field);
+  }
+}
+
+/**
+ * Create a new input format to use for filtering.
+ */
+function islandora_solr_metadata_update_7103() {
+  $t = get_t();
+  $format = filter_format_load('filtered_html');
+  $format->format = 'islandora_solr_metadata_filtered_html';
+  $format->name = $t('Islandora Solr Metadata Filtered HTML');
+  $format->filters = filter_list_format('filtered_html');
+  foreach ($format->filters as $key => $filter) {
+    $format->filters[$key] = (array) $filter;
+  }
+  $to_exist = array(
+    '<a>',
+    '<span>',
+  );
+  $tags = $format->filters['filter_html']['settings']['allowed_html'];
+  foreach ($to_exist as $add) {
+    if (strpos($tags, $add) === FALSE) {
+      $tags .= " $add";
+    }
+  }
+
+  $format->filters['filter_html']['settings']['allowed_html'] = $tags;
+  filter_format_save($format);
+}
+
+/**
+ * Implements hook_install().
+ */
+function islandora_solr_metadata_install() {
+  $t = get_t();
+  $format = filter_format_load('filtered_html');
+  $format->format = 'islandora_solr_metadata_filtered_html';
+  $format->name = $t('Islandora Solr Metadata Filtered HTML');
+  $format->filters = filter_list_format('filtered_html');
+  foreach ($format->filters as $key => $filter) {
+    $format->filters[$key] = (array) $filter;
+  }
+  $to_exist = array(
+    '<a>',
+    '<span>',
+  );
+  $tags = $format->filters['filter_html']['settings']['allowed_html'];
+  foreach ($to_exist as $add) {
+    if (strpos($tags, $add) === FALSE) {
+      $tags .= " $add";
+    }
+  }
+
+  $format->filters['filter_html']['settings']['allowed_html'] = $tags;
+  filter_format_save($format);
 }
