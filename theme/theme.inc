@@ -170,7 +170,7 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
             'formatter' => NULL,
           );
           if (($truncation = drupal_array_get_nested_value($field_config, array('truncation'))) && $truncation['max_length'] > 0) {
-            $value = truncate_utf8($value, $truncation['max_length'], TRUE, TRUE);
+            $value = truncate_utf8($value, $truncation['max_length'], $truncation['word_safe'], $truncation['ellipsis'], $truncation['min_wordsafe_length']);
             if ($value !== $original_value) {
               $mod_path = drupal_get_path('module', 'islandora_solr_metadata');
               drupal_add_js("$mod_path/js/truncation-toggle.js");
@@ -178,8 +178,12 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
               // <br/>'s in the later check_markup.
               return implode('', array(
                 '<span class="toggle-wrapper">',
-                "<span>$value <a href='#' class='toggler'>Show more</a></span>",
-                "<span>$original_value <a href='#' class='toggler'>Show less</a></span>",
+                t("<span>!value <a href='#' class='toggler'>Show more</a></span>", array(
+                  '!value' => $value,
+                )),
+                t("<span>!original_value <a href='#' class='toggler'>Show less</a></span>", array(
+                  '!original_value' => $original_value,
+                )),
                 '</span>',
               ));
             }
