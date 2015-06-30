@@ -31,8 +31,8 @@ function islandora_solr_metadata_menu() {
     'title arguments' => array(5, 6),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_solr_metadata_config_field_form', 5, 6),
-    'access callback' => 'islandora_solr_metadata_access',
-    'access arguments' => array(5),
+    'access callback' => 'islandora_solr_metadata_field_configuration_access',
+    'access arguments' => array(5, 6),
     'file' => 'includes/config.inc',
   );
   $items['admin/islandora/search/islandora_solr_metadata/config/delete/%'] = array(
@@ -115,6 +115,25 @@ function islandora_solr_metadata_permission() {
 function islandora_solr_metadata_access($configuration_id) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   return islandora_solr_metadata_configuration_exists($configuration_id) && user_access('administer islandora_solr_metadata');
+}
+
+/**
+ * Access callback for accessing field configuration.
+ *
+ * @param int $configuration_id
+ *   The configuration ID of the list we are accessing.
+ * @param string $escaped_field
+ *   The name of the Solr field with slashes escaped, as per
+ *   islandora_solr_replace_slashes().
+ *
+ * @return bool
+ *   TRUE if the user has access to the configuration and the field exists in
+ *   the configuration, FALSE otherwise.
+ */
+function islandora_solr_metadata_field_configuration_access($configuration_id, $escaped_field) {
+  module_load_include('inc', 'islandora_solr', 'includes/utilities');
+  module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
+  return islandora_solr_metadata_access($configuration_id) && array_key_exists(islandora_solr_restore_slashes($escaped_field), islandora_solr_metadata_get_fields($configuration_id, FALSE));
 }
 
 /**
