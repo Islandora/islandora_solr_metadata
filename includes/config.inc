@@ -517,6 +517,13 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
       '#type' => 'textfield',
       '#title' => t('Minimum word-safe length'),
       '#default_value' => $get_default(array('truncation', 'min_wordsafe_length'), 1),
+      '#states' => array(
+        'visible' => array(
+          ':input[name="wrapper[truncation][word_safe]"]' => array(
+            'checked' => TRUE,
+          ),
+        ),
+      ),
     ),
   );
 
