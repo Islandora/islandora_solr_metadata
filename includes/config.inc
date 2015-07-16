@@ -564,6 +564,9 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
           ':input[name="wrapper[truncation][word_safe]"]' => array(
             'checked' => TRUE,
           ),
+          ':input[name="wrapper[truncation][truncation_type]"]' => array(
+            'value' => 'separate_value_option',
+          ),
         ),
       ),
     ),
