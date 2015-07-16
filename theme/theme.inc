@@ -169,7 +169,7 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
             'hyperlink' => 0,
             'formatter' => NULL,
           );
-          if (($truncation = drupal_array_get_nested_value($field_config, array('truncation'))) && $truncation['max_length'] > 0) {
+          if (($truncation = drupal_array_get_nested_value($field_config, array('truncation'))) && $truncation['max_length'] > 0 && (!isset($truncation['truncation_type']) || $truncation['truncation_type'] == 'separate_value_option')) {
             $value = truncate_utf8($value, $truncation['max_length'], $truncation['word_safe'], $truncation['ellipsis'], $truncation['min_wordsafe_length']);
             if ($value !== $original_value) {
               $mod_path = drupal_get_path('module', 'islandora_solr_metadata');
@@ -225,6 +225,37 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
       if (variable_get('islandora_solr_metadata_dedup_values', FALSE)) {
         foreach ($solr_fields as &$field) {
           $field['value'] = array_unique($field['value']);
+        }
+        unset($field);
+      }
+
+      // After values are omitted/dedupped filter down the displayed results.
+      foreach ($solr_fields as &$field) {
+        // Check if the field is configured to filter based on whole field.
+        if (($truncation = drupal_array_get_nested_value($field, array('truncation'))) && isset($truncation['max_values']) && $truncation['max_values'] > 0 && $truncation['truncation_type'] == 'whole_field_option') {
+          if (count($field['value']) > 0) {
+            $mod_path = drupal_get_path('module', 'islandora_solr_metadata');
+            drupal_add_js("$mod_path/js/truncation-toggle.js");
+            // Build two arrays for display, one filtered by size (max_values)
+            // and one with all the data.
+            foreach ($field['value'] as $index => $current_value) {
+              $list_full[] = $current_value;
+              if ($index + 1 <= $truncation['max_values']) {
+                $list[] = $current_value;
+              }
+            }
+            $updated_value[]
+              = '<span class="toggle-wrapper">' .
+              t("<span>!value \n<a href='#' class='toggler'>Show more</a></span>", array(
+                '!value' => implode("\n", $list),
+              )) .
+              t("<span>!original_value \n<a href='#' class='toggler'>Show less</a></span>", array(
+                '!original_value' => implode("\n", $list_full),
+              )) .
+              '</span>';
+            // Replace value with updated field display.
+            $field['value'] = $updated_value;
+          }
         }
         unset($field);
       }
