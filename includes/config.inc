@@ -503,7 +503,7 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
     'max_length' => array(
       '#type' => 'textfield',
       '#title' => t('Max Length'),
-      '#description' => t('The field contents will be truncated to be at most this length (in characters) for display. 0 or less to disable truncation.'),
+      '#description' => t('The field contents will be truncated to be at most this length (in characters) for display. 0 or less to disable truncation.<br /> When truncating based on the whole field the max length may be exceeded by the length of ellispse string.'),
       '#default_value' => $get_default(array('truncation', 'max_length'), 0),
       '#element_validate' => array('element_validate_integer'),
     ),

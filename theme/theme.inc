@@ -233,45 +233,11 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
       foreach ($solr_fields as &$field) {
         // Check if the field is configured to filter based on whole field.
         if (($truncation = drupal_array_get_nested_value($field, array('truncation'))) && $truncation['max_length'] > 0 && $truncation['truncation_type'] == 'whole_field_option') {
-          if (count($field['value']) > 0) {
-            $mod_path = drupal_get_path('module', 'islandora_solr_metadata');
-            drupal_add_js("$mod_path/js/truncation-toggle.js");
-
-            // Build two arrays for display, one filtered by size (based on
-            // character count of what is displayed in the field) and one with
-            // all the data.
-            $character_output_count = 0;
-            $truncated = FALSE;
-            foreach ($field['value'] as $index => $current_value) {
-              $list_full[] = $current_value;
-              if ($character_output_count + strlen($current_value) <= $truncation['max_length']) {
-                $list[] = $current_value;
-              }
-              elseif ($character_output_count + strlen($current_value) > $truncation['max_length'] && !$truncated) {
-                $truncation_length = $truncation['max_length'] - $character_output_count;
-                // Force the display of the full ellipsis.
-                if ($truncation_length < strlen(t('...')) && $truncation['ellipsis']) {
-                  $truncation_length = strlen(t('...'));
-                }
-                $current_value = truncate_utf8($current_value, $truncation_length, $truncation['word_safe'], $truncation['ellipsis'], $truncation['min_wordsafe_length']);
-                $list[] = $current_value;
-                $truncated = TRUE;
-              }
-              $character_output_count += strlen($current_value);
-            }
-
-            $updated_value[]
-              = '<span class="toggle-wrapper">' .
-              t("<span>!value \n<a href='#' class='toggler'>Show more</a></span>", array(
-                '!value' => implode("\n", $list),
-              )) .
-              t("<span>!original_value \n<a href='#' class='toggler'>Show less</a></span>", array(
-                '!original_value' => implode("\n", $list_full),
-              )) .
-              '</span>';
-            // Replace value with updated field display.
-            $field['value'] = $updated_value;
-          }
+          module_load_include('inc', 'islandora_solr_search', 'includes/utilities');
+          // Keep the updated value stored in an array.
+          $updated_value[] = islandora_solr_truncate_field_display($field['value'], $truncation['max_length'], $truncation['ellipsis'], $truncation['word_safe'], $truncation['min_wordsafe_length'], "\n");
+          // Replace value with updated field display.
+          $field['value'] = $updated_value;
         }
         unset($field);
       }
