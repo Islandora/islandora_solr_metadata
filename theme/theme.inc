@@ -172,7 +172,7 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
           if (($truncation = drupal_array_get_nested_value($field_config, array('truncation'))) && $truncation['max_length'] > 0 && (!isset($truncation['truncation_type']) || $truncation['truncation_type'] == 'separate_value_option')) {
             $value = truncate_utf8($value, $truncation['max_length'], $truncation['word_safe'], $truncation['ellipsis'], $truncation['min_wordsafe_length']);
             if ($value !== $original_value) {
-              $mod_path = drupal_get_path('module', 'islandora_solr_metadata');
+              $mod_path = drupal_get_path('module', 'islandora_solr');
               drupal_add_js("$mod_path/js/truncation-toggle.js");
               // XXX: implode()'ing to avoid newlines which get converted to
               // <br/>'s in the later check_markup.
@@ -233,7 +233,6 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
       foreach ($solr_fields as &$field) {
         // Check if the field is configured to filter based on whole field.
         if (($truncation = drupal_array_get_nested_value($field, array('truncation'))) && $truncation['max_length'] > 0 && $truncation['truncation_type'] == 'whole_field_option') {
-          module_load_include('inc', 'islandora_solr_search', 'includes/utilities');
           // Keep the updated value stored in an array.
           $updated_value[] = islandora_solr_truncate_field_display($field['value'], $truncation['max_length'], $truncation['ellipsis'], $truncation['word_safe'], $truncation['min_wordsafe_length'], "\n");
           // Replace value with updated field display.
