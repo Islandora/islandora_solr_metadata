@@ -500,59 +500,24 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
       '#options' => array('separate_value_option' => t('Limit length of each separate value'), 'whole_field_option' => t('Limit Length of the whole field')),
       '#default_value' => $get_default(array('truncation', 'truncation_type'), 'separate_value_option'),
     ),
-    'max_values' => array(
-      '#type' => 'textfield',
-      '#title' => t('Max Results Displayed'),
-      '#description' => t('The field contents will be truncated to only display at most this number of results. 0 or less to disable truncation.'),
-      '#default_value' => $get_default(array('truncation', 'max_values'), 0),
-      '#element_validate' => array('element_validate_integer'),
-      '#states' => array(
-        'visible' => array(
-          ':input[name="wrapper[truncation][truncation_type]"]' => array(
-            'value' => 'whole_field_option',
-          ),
-        ),
-      ),
-    ),
     'max_length' => array(
       '#type' => 'textfield',
       '#title' => t('Max Length'),
       '#description' => t('The field contents will be truncated to be at most this length (in characters) for display. 0 or less to disable truncation.'),
       '#default_value' => $get_default(array('truncation', 'max_length'), 0),
       '#element_validate' => array('element_validate_integer'),
-      '#states' => array(
-        'visible' => array(
-          ':input[name="wrapper[truncation][truncation_type]"]' => array(
-            'value' => 'separate_value_option',
-          ),
-        ),
-      ),
     ),
     'word_safe' => array(
       '#type' => 'checkbox',
       '#title' => t('Word-safe'),
       '#description' => t('Attempt to truncate on a word boundary. See truncate_utf8() for more info.'),
       '#default_value' => $get_default(array('truncation', 'word_safe'), FALSE),
-      '#states' => array(
-        'visible' => array(
-          ':input[name="wrapper[truncation][truncation_type]"]' => array(
-            'value' => 'separate_value_option',
-          ),
-        ),
-      ),
     ),
     'ellipsis' => array(
       '#type' => 'checkbox',
       '#title' => t('Ellipsis'),
       '#description' => t('Append ellipses when truncating occurs.'),
       '#default_value' => $get_default(array('truncation', 'ellipsis'), FALSE),
-      '#states' => array(
-        'visible' => array(
-          ':input[name="wrapper[truncation][truncation_type]"]' => array(
-            'value' => 'separate_value_option',
-          ),
-        ),
-      ),
     ),
     'min_wordsafe_length' => array(
       '#type' => 'textfield',
@@ -563,9 +528,6 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
         'visible' => array(
           ':input[name="wrapper[truncation][word_safe]"]' => array(
             'checked' => TRUE,
-          ),
-          ':input[name="wrapper[truncation][truncation_type]"]' => array(
-            'value' => 'separate_value_option',
           ),
         ),
       ),
@@ -583,17 +545,7 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
  * Form validation handler; validate some values.
  */
 function islandora_solr_metadata_config_field_form_validate(&$form, &$form_state) {
-  $truncation_type = $form_state['values']['wrapper']['truncation']['truncation_type'];
-  $using_truncation = FALSE;
-  // Check if whole field truncation is enabled and configured.
-  if ($truncation_type == 'whole_field_option' && $form_state['values']['wrapper']['truncation']['max_values'] > 0) {
-    $using_truncation = TRUE;
-  }
-  // Check if value truncation is enabled and configured.
-  if ($truncation_type == 'separate_value_option' && $form_state['values']['wrapper']['truncation']['max_length'] > 0) {
-    $using_truncation = TRUE;
-  }
-  if ($form_state['values']['wrapper']['hyperlink'] && $using_truncation) {
+  if ($form_state['values']['wrapper']['hyperlink'] && $form_state['values']['wrapper']['truncation']['max_length'] > 0) {
     form_error($form['wrapper']['hyperlink'], t('Either hyperlinking or truncation can be used, but not both together on the same field. Disable one.'));
     form_error($form['wrapper']['truncation']['max_length']);
   }
