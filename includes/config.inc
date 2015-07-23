@@ -494,10 +494,16 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
   $set['truncation'] = array(
     '#type' => 'fieldset',
     '#title' => t('Truncation'),
+    'truncation_type' => array(
+      '#type' => 'radios',
+      '#title' => t('Truncation Type'),
+      '#options' => array('separate_value_option' => t('Limit length of each separate value'), 'whole_field_option' => t('Limit Length of the whole field')),
+      '#default_value' => $get_default(array('truncation', 'truncation_type'), 'separate_value_option'),
+    ),
     'max_length' => array(
       '#type' => 'textfield',
       '#title' => t('Max Length'),
-      '#description' => t('The field contents will be truncated to be at most this length (in characters) for display. 0 or less to disable truncation.'),
+      '#description' => t('The field contents will be truncated to be at most this length (in characters) for display. 0 or less to disable truncation.<br /> When truncating based on the whole field the max length may be exceeded by the length of ellispse string.'),
       '#default_value' => $get_default(array('truncation', 'max_length'), 0),
       '#element_validate' => array('element_validate_integer'),
     ),
@@ -517,6 +523,7 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
       '#type' => 'textfield',
       '#title' => t('Minimum word-safe length'),
       '#default_value' => $get_default(array('truncation', 'min_wordsafe_length'), 1),
+      '#element_validate' => array('element_validate_integer_positive'),
       '#states' => array(
         'visible' => array(
           ':input[name="wrapper[truncation][word_safe]"]' => array(
