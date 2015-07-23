@@ -18,8 +18,8 @@
  * @see template_process_islandora_solr_metadata_display()
  */
 ?>
-<?php if ($found):?>
-   <?php if (!(empty($solr_fields) && variable_get('islandora_solr_metadata_omit_empty_values', FALSE))):?>
+<?php if ($found):
+  if (!(empty($solr_fields) && variable_get('islandora_solr_metadata_omit_empty_values', FALSE))):?>
 <fieldset <?php $print ? print('class="islandora islandora-metadata"') : print('class="islandora islandora-metadata collapsible collapsed"');?>>
   <legend><span class="fieldset-legend"><?php print t('Details'); ?></span></legend>
   <div class="fieldset-wrapper">
@@ -37,7 +37,7 @@
     </dl>
   </div>
 </fieldset>
-  <?php endif; ?>
+<?php endif; ?>
 <?php else: ?>
   <fieldset <?php $print ? print('class="islandora islandora-metadata"') : print('class="islandora islandora-metadata collapsible collapsed"');?>>
     <legend><span class="fieldset-legend"><?php print t('Details'); ?></span></legend>
