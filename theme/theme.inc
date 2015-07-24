@@ -163,7 +163,7 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
       $constrained_results = array_intersect_key($solr_results_doc, $solr_fields);
 
       foreach ($constrained_results as $solr_field => $value) {
-        $get_display_value = function ($original_value) use ($solr_field, $solr_fields) {
+        $get_display_value = function ($original_value) use ($solr_field, &$solr_fields) {
           $value = $original_value;
           $field_config = $solr_fields[$solr_field] + array(
             'hyperlink' => 0,
