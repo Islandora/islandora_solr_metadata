@@ -236,7 +236,7 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
       // After values are omitted/dedupped filter down the displayed results.
       foreach ($solr_fields as &$field) {
         // Check if the field is configured to filter based on whole field.
-        if (($truncation = drupal_array_get_nested_value($field, array('truncation'))) && $truncation['max_length'] > 0 && $truncation['truncation_type'] == 'whole_field_option') {
+        if (($truncation = drupal_array_get_nested_value($field, array('truncation'))) && $truncation['max_length'] > 0 && isset($truncation['truncation_type']) && $truncation['truncation_type'] == 'whole_field_option') {
           // Keep the updated value stored in an array.
           $updated_value[] = islandora_solr_truncate_field_display($field['value'], $truncation['max_length'], $truncation['ellipsis'], $truncation['word_safe'], $truncation['min_wordsafe_length'], "\n");
           // Replace value with updated field display.
