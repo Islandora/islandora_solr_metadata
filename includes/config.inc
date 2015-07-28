@@ -317,7 +317,8 @@ function islandora_solr_metadata_config_form_submit($form, $form_state) {
         'remove_field',
       )));
     };
-    $fields_fs_mapped = array_map($remove_form_specifics, drupal_array_merge_deep($form_state['field_data'], $form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows']));
+    $rows = isset($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows']) ? $form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows'] : array();
+    $fields_fs_mapped = array_map($remove_form_specifics, drupal_array_merge_deep($form_state['field_data'], $rows));
     $fields_db = islandora_solr_metadata_get_fields($configuration_id);
 
     $cmodels_db = islandora_solr_metadata_get_cmodels($configuration_id);
