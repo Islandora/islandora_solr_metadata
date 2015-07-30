@@ -512,7 +512,7 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
     '#description' => t('Should each value for this field be linked to a search to find objects with the value in this field?'),
     '#default_value' => $get_default('hyperlink', FALSE),
   );
-  // Add in truncation fields for description.
+  // Add in truncation fields for metadata field.
   $truncation_config = array(
     'default_values' => array(
       'truncation_type' => $get_default(array('truncation', 'truncation_type'), 'separate_value_option'),
