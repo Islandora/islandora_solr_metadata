@@ -217,41 +217,20 @@ function islandora_solr_metadata_config_form($form, &$form_state, $configuration
       ),
     ),
   );
-  $form['islandora_solr_metadata_fields']['description_fieldset']['truncation'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Truncation'),
-    'truncation_type' => array(
-      '#type' => 'radios',
-      '#title' => t('Truncation Type'),
-      '#options' => array('separate_value_option' => t('Limit length of each separate value'), 'whole_field_option' => t('Limit Length of the whole field')),
-      '#default_value' => $description['description_data']['truncation']['truncation_type'] ? $description['description_data']['truncation']['truncation_type'] : 'separate_value_option',
+
+  // Add in truncation fields for description.
+  $truncation_config = array(
+    'default_values' => array(
+      'truncation_type' => $description['description_data']['truncation']['truncation_type'] ? $description['description_data']['truncation']['truncation_type'] : 'separate_value_option',
+      'max_length' => $description['description_data']['truncation']['max_length'] ? $description['description_data']['truncation']['max_length'] : 0,
+      'word_safe' => $description['description_data']['truncation']['word_safe'] ? $description['description_data']['truncation']['word_safe'] : FALSE,
+      'ellipsis' => $description['description_data']['truncation']['ellipsis'] ? $description['description_data']['truncation']['ellipsis'] : FALSE,
+      'min_wordsafe_length' => $description['description_data']['truncation']['min_wordsafe_length'] ? $description['description_data']['truncation']['min_wordsafe_length'] : 1,
     ),
-    'max_length' => array(
-      '#type' => 'textfield',
-      '#title' => t('Max Length'),
-      '#description' => t('The field contents will be truncated to be at most this length (in characters) for display. 0 or less to disable truncation.<br /> When truncating based on the whole field the max length may be exceeded by the length of ellispse string.'),
-      '#default_value' => $description['description_data']['truncation']['max_length'] ? $description['description_data']['truncation']['max_length'] : 0,
-      '#element_validate' => array('element_validate_integer'),
-    ),
-    'word_safe' => array(
-      '#type' => 'checkbox',
-      '#title' => t('Word-safe'),
-      '#description' => t('Attempt to truncate on a word boundary. See truncate_utf8() for more info.'),
-      '#default_value' => $description['description_data']['truncation']['word_safe'] ? $description['description_data']['truncation']['word_safe'] : FALSE,
-    ),
-    'ellipsis' => array(
-      '#type' => 'checkbox',
-      '#title' => t('Ellipsis'),
-      '#description' => t('Append ellipses when truncating occurs.'),
-      '#default_value' => $description['description_data']['truncation']['ellipsis'] ? $description['description_data']['truncation']['ellipsis'] : FALSE,
-    ),
-    'min_wordsafe_length' => array(
-      '#type' => 'textfield',
-      '#title' => t('Minimum word-safe length'),
-      '#default_value' => $description['description_data']['truncation']['min_wordsafe_length'] ? $description['description_data']['truncation']['min_wordsafe_length'] : 1,
-      '#element_validate' => array('element_validate_integer_positive'),
-    ),
+    'min_wordsafe_length_input_path' => "islandora_solr_metadata_fields[description_fieldset][truncation][word_safe]",
   );
+  islandora_solr_metadata_add_truncation_to_form($form['islandora_solr_metadata_fields']['description_fieldset'], $truncation_config;
+
   $form['islandora_solr_metadata_save'] = array(
     '#type' => 'submit',
     '#value' => t('Save configuration'),
@@ -533,48 +512,18 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
     '#description' => t('Should each value for this field be linked to a search to find objects with the value in this field?'),
     '#default_value' => $get_default('hyperlink', FALSE),
   );
-  $set['truncation'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Truncation'),
-    'truncation_type' => array(
-      '#type' => 'radios',
-      '#title' => t('Truncation Type'),
-      '#options' => array('separate_value_option' => t('Limit length of each separate value'), 'whole_field_option' => t('Limit Length of the whole field')),
-      '#default_value' => $get_default(array('truncation', 'truncation_type'), 'separate_value_option'),
+  // Add in truncation fields for description.
+  $truncation_config = array(
+    'default_values' => array(
+      'truncation_type' => $get_default(array('truncation', 'truncation_type'), 'separate_value_option'),
+      'max_length' => $get_default(array('truncation', 'max_length'), 0),
+      'word_safe' => $get_default(array('truncation', 'word_safe'), FALSE),
+      'ellipsis' => $get_default(array('truncation', 'ellipsis'), FALSE),
+      'min_wordsafe_length' => $get_default(array('truncation', 'min_wordsafe_length'), 1),
     ),
-    'max_length' => array(
-      '#type' => 'textfield',
-      '#title' => t('Max Length'),
-      '#description' => t('The field contents will be truncated to be at most this length (in characters) for display. 0 or less to disable truncation.<br /> When truncating based on the whole field the max length may be exceeded by the length of ellispse string.'),
-      '#default_value' => $get_default(array('truncation', 'max_length'), 0),
-      '#element_validate' => array('element_validate_integer'),
-    ),
-    'word_safe' => array(
-      '#type' => 'checkbox',
-      '#title' => t('Word-safe'),
-      '#description' => t('Attempt to truncate on a word boundary. See truncate_utf8() for more info.'),
-      '#default_value' => $get_default(array('truncation', 'word_safe'), FALSE),
-    ),
-    'ellipsis' => array(
-      '#type' => 'checkbox',
-      '#title' => t('Ellipsis'),
-      '#description' => t('Append ellipses when truncating occurs.'),
-      '#default_value' => $get_default(array('truncation', 'ellipsis'), FALSE),
-    ),
-    'min_wordsafe_length' => array(
-      '#type' => 'textfield',
-      '#title' => t('Minimum word-safe length'),
-      '#default_value' => $get_default(array('truncation', 'min_wordsafe_length'), 1),
-      '#element_validate' => array('element_validate_integer_positive'),
-      '#states' => array(
-        'visible' => array(
-          ':input[name="wrapper[truncation][word_safe]"]' => array(
-            'checked' => TRUE,
-          ),
-        ),
-      ),
-    ),
+    'min_wordsafe_length_input_path' => "wrapper[truncation][word_safe]",
   );
+  islandora_solr_metadata_add_truncation_to_form($set, $truncation_config);
 
   $form['submit'] = array(
     '#type' => 'submit',
@@ -608,5 +557,70 @@ function islandora_solr_metadata_config_field_form_submit(&$form, &$form_state) 
 
   $form_state['redirect'] = array(
     "admin/islandora/search/islandora_solr_metadata/config/$config_id",
+  );
+}
+
+
+/**
+ * Generates the truncation field settings section to attach to a form.
+ *
+ * @param array $form
+ *   The location in the form that the truncation should be appended to.
+ *
+ * @param array $field_config
+ *   An associative array containing the following:
+ *   - default_values
+ *      - truncation_type
+ *      - max_length
+ *      - word_safe
+ *      - ellipsis
+ *      - min_wordsafe_length
+ *   - min_wordsafe_length_input_path
+ */
+function islandora_solr_metadata_add_truncation_to_form(&$form, $field_config) {
+  $form['truncation'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Truncation'),
+    'truncation_type' => array(
+      '#type' => 'radios',
+      '#title' => t('Truncation Type'),
+      '#options' => array(
+        'separate_value_option' => t('Limit length of each separate value'),
+        'whole_field_option' => t('Limit Length of the whole field'),
+      ),
+      '#default_value' => $field_config['default_values']['truncation_type'],
+    ),
+    'max_length' => array(
+      '#type' => 'textfield',
+      '#title' => t('Max Length'),
+      '#description' => t('The field contents will be truncated to be at most this length (in characters) for display. 0 or less to disable truncation.<br /> When truncating based on the whole field the max length may be exceeded by the length of ellispse string.'),
+      '#default_value' => $field_config['default_values']['max_length'],
+      '#element_validate' => array('element_validate_integer'),
+    ),
+    'word_safe' => array(
+      '#type' => 'checkbox',
+      '#title' => t('Word-safe'),
+      '#description' => t('Attempt to truncate on a word boundary. See truncate_utf8() for more info.'),
+      '#default_value' => $field_config['default_values']['word_safe'],
+    ),
+    'ellipsis' => array(
+      '#type' => 'checkbox',
+      '#title' => t('Ellipsis'),
+      '#description' => t('Append ellipses when truncating occurs.'),
+      '#default_value' => $field_config['default_values']['ellipsis'],
+    ),
+    'min_wordsafe_length' => array(
+      '#type' => 'textfield',
+      '#title' => t('Minimum word-safe length'),
+      '#default_value' => $field_config['default_values']['min_wordsafe_length'],
+      '#element_validate' => array('element_validate_integer_positive'),
+      '#states' => array(
+        'visible' => array(
+          ':input[name="' . $field_config['min_wordsafe_length_input_path'] . '"]' => array(
+            'checked' => TRUE,
+          ),
+        ),
+      ),
+    ),
   );
 }
