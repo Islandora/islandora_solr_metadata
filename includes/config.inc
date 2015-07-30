@@ -229,7 +229,7 @@ function islandora_solr_metadata_config_form($form, &$form_state, $configuration
     ),
     'min_wordsafe_length_input_path' => "islandora_solr_metadata_fields[description_fieldset][truncation][word_safe]",
   );
-  islandora_solr_metadata_add_truncation_to_form($form['islandora_solr_metadata_fields']['description_fieldset'], $truncation_config;
+  islandora_solr_metadata_add_truncation_to_form($form['islandora_solr_metadata_fields']['description_fieldset'], $truncation_config);
 
   $form['islandora_solr_metadata_save'] = array(
     '#type' => 'submit',
