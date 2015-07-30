@@ -94,7 +94,7 @@ function islandora_solr_metadata_configurations_features_rebuild($module_name) {
         $config_id = islandora_solr_metadata_add_configuration($config_info['name'], $machine_name);
       }
       // Add fields and cmodels, related to config_id.
-      islandora_solr_metadata_update_description($config_id, $config_info['description']['description_field'], $config_info['description']['description_label']);
+      islandora_solr_metadata_update_description($config_id, $config_info['description']['description_field'], $config_info['description']['description_label'], $config_info['description']['description_data']);
       islandora_solr_metadata_add_content_models($config_id, array_map(function ($e) {
         return array('cmodel' => $e);
       }, $config_info['cmodels']));
