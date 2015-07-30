@@ -414,12 +414,17 @@ function islandora_solr_metadata_update_fields($configuration_id, $fields) {
  *   -description_label: The display label associated with the description.
  */
 function islandora_solr_metadata_retrieve_description($configuration_id, $translate = TRUE) {
-  $result = db_query('SELECT description_field, description_label FROM {islandora_solr_metadata_associations} WHERE configuration_id = :configuration_id', array(':configuration_id' => $configuration_id));
+  $result = db_query('SELECT description_field, description_label, description_data FROM {islandora_solr_metadata_associations} WHERE configuration_id = :configuration_id', array(':configuration_id' => $configuration_id));
   $description = $result->fetchAssoc();
   if ($translate && module_exists('i18n_string')) {
     $i18n_id = islandora_solr_metadata_description_i18n_id($configuration_id);
     $description['description_label'] = i18n_string_translate($i18n_id, $description['description_label']);
   }
+
+  if (!empty($description['description_data'])) {
+    $description['description_data'] = unserialize($description['description_data']);
+  }
+
   return $description;
 }
 
@@ -432,16 +437,20 @@ function islandora_solr_metadata_retrieve_description($configuration_id, $transl
  *   The Solr field which we are grabbing the description value from.
  * @param string $description_label
  *   The label for the description metadata.
+ * @param array $description_data
+ *   An array of extra data to be stored for custom solr metadata display.
  */
-function islandora_solr_metadata_update_description($configuration_id, $description_field, $description_label) {
+function islandora_solr_metadata_update_description($configuration_id, $description_field, $description_label, $description_data = array()) {
   if (empty($description_field)) {
     $description_field = NULL;
     $description_label = NULL;
+    $description_data = NULL;
   }
   db_update('islandora_solr_metadata_associations')
     ->fields(array(
       'description_field' => $description_field,
       'description_label' => $description_label,
+      'description_data' => serialize($description_data),
     ))
     ->condition('configuration_id', $configuration_id)
     ->execute();

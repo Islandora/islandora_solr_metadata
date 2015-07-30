@@ -198,7 +198,6 @@ function islandora_solr_metadata_config_form($form, &$form_state, $configuration
     '#collapsed' => TRUE,
     '#collapsible' => FALSE,
   );
-
   $description = islandora_solr_metadata_retrieve_description($configuration_id, FALSE);
   $form['islandora_solr_metadata_fields']['description_fieldset']['available_solr_fields'] = array(
     '#type' => 'textfield',
@@ -216,6 +215,41 @@ function islandora_solr_metadata_config_form($form, &$form_state, $configuration
       'visible' => array(
         ':input[name="islandora_solr_metadata_fields[description_fieldset][available_solr_fields]"]' => array('empty' => FALSE),
       ),
+    ),
+  );
+  $form['islandora_solr_metadata_fields']['description_fieldset']['truncation'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Truncation'),
+    'truncation_type' => array(
+      '#type' => 'radios',
+      '#title' => t('Truncation Type'),
+      '#options' => array('separate_value_option' => t('Limit length of each separate value'), 'whole_field_option' => t('Limit Length of the whole field')),
+      '#default_value' => $description['description_data']['truncation']['truncation_type'] ? $description['description_data']['truncation']['truncation_type'] : 'separate_value_option',
+    ),
+    'max_length' => array(
+      '#type' => 'textfield',
+      '#title' => t('Max Length'),
+      '#description' => t('The field contents will be truncated to be at most this length (in characters) for display. 0 or less to disable truncation.<br /> When truncating based on the whole field the max length may be exceeded by the length of ellispse string.'),
+      '#default_value' => $description['description_data']['truncation']['max_length'] ? $description['description_data']['truncation']['max_length'] : 0,
+      '#element_validate' => array('element_validate_integer'),
+    ),
+    'word_safe' => array(
+      '#type' => 'checkbox',
+      '#title' => t('Word-safe'),
+      '#description' => t('Attempt to truncate on a word boundary. See truncate_utf8() for more info.'),
+      '#default_value' => $description['description_data']['truncation']['word_safe'] ? $description['description_data']['truncation']['word_safe'] : FALSE,
+    ),
+    'ellipsis' => array(
+      '#type' => 'checkbox',
+      '#title' => t('Ellipsis'),
+      '#description' => t('Append ellipses when truncating occurs.'),
+      '#default_value' => $description['description_data']['truncation']['ellipsis'] ? $description['description_data']['truncation']['ellipsis'] : FALSE,
+    ),
+    'min_wordsafe_length' => array(
+      '#type' => 'textfield',
+      '#title' => t('Minimum word-safe length'),
+      '#default_value' => $description['description_data']['truncation']['min_wordsafe_length'] ? $description['description_data']['truncation']['min_wordsafe_length'] : 1,
+      '#element_validate' => array('element_validate_integer_positive'),
     ),
   );
   $form['islandora_solr_metadata_save'] = array(
@@ -352,7 +386,14 @@ function islandora_solr_metadata_config_form_submit($form, $form_state) {
 
     $description_field = $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['available_solr_fields'];
     $description_label = $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['display_label'];
-    islandora_solr_metadata_update_description($configuration_id, $description_field, $description_label);
+    $truncation_array['truncation'] = array(
+      'truncation_type' => $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['truncation']['truncation_type'],
+      'max_length' => $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['truncation']['max_length'],
+      'word_safe' => $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['truncation']['word_safe'],
+      'ellipsis' => $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['truncation']['ellipsis'],
+      'min_wordsafe_length' => $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['truncation']['min_wordsafe_length'],
+    );
+    islandora_solr_metadata_update_description($configuration_id, $description_field, $description_label, $truncation_array);
     drupal_set_message(t('The Solr metadata display configuration options have been saved.'));
   }
 

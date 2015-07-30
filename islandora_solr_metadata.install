@@ -36,6 +36,13 @@ function islandora_solr_metadata_schema() {
         'description' => 'The label for the description metadata',
         'default' => NULL,
       ),
+      'description_data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of name value pairs that store extra description field settings.',
+      ),
       'machine_name' => array(
         'type' => 'varchar',
         'length' => 255,
@@ -205,6 +212,19 @@ function islandora_solr_metadata_update_7103() {
 
   $format->filters['filter_html']['settings']['allowed_html'] = $tags;
   filter_format_save($format);
+}
+
+/**
+ * Create a new storage field to use for description truncation.
+ */
+function islandora_solr_metadata_update_7104() {
+  db_add_field('islandora_solr_metadata_associations', 'description_data', array(
+    'type' => 'blob',
+    'not null' => FALSE,
+    'size' => 'big',
+    'serialize' => TRUE,
+    'description' => 'A serialized array of name value pairs that store extra description field settings.',
+  ));
 }
 
 /**
