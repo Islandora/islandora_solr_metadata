@@ -115,6 +115,7 @@ function template_preprocess_islandora_solr_metadata_description(array &$variabl
     $solr_fields[$desc_field] = array(
       'display_label' => $description['description_label'],
       'value' => array(),
+      'description_data' => $description['description_data'],
     );
   }
 }
@@ -128,6 +129,38 @@ function template_process_islandora_solr_metadata_description(array &$variables)
   // XXX: Seems a little odd, yes... Was reusing the "description" value,
   // though.
   $variables['description'] = $variables['solr_fields'];
+  // Truncate the description value(s).
+  foreach ($variables['description'] as &$field) {
+    if (isset($field['description_data']['truncation'])) {
+      if ($field['description_data']['truncation']['max_length'] > 0) {
+        module_load_include('inc', 'islandora_solr', 'includes/utilities');
+        $field['value'] = array_filter($field['value']);
+        if ($field['description_data']['truncation']['truncation_type'] == 'whole_field_option') {
+          $updated_value[] = islandora_solr_truncate_field_display(
+            $field['value'],
+            $field['description_data']['truncation']['max_length'],
+            $field['description_data']['truncation']['ellipsis'],
+            $field['description_data']['truncation']['word_safe'],
+            $field['description_data']['truncation']['min_wordsafe_length'],
+            "\n"
+          );
+          $field['value'] = $updated_value;
+        }
+        else {
+          foreach ($field['value'] as $index => $value) {
+            $field['value'][$index] = islandora_solr_truncate_field_display(
+              (array) $value,
+              $field['description_data']['truncation']['max_length'],
+              $field['description_data']['truncation']['ellipsis'],
+              $field['description_data']['truncation']['word_safe'],
+              $field['description_data']['truncation']['min_wordsafe_length'],
+              " "
+            );
+          }
+        }
+      }
+    }
+  }
 }
 
 /**

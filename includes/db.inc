@@ -412,14 +412,28 @@ function islandora_solr_metadata_update_fields($configuration_id, $fields) {
  *   An associative array containing:
  *   -description_field: The Solr field used to generate the description.
  *   -description_label: The display label associated with the description.
+ *   -description_data: An array of extra data for custom solr metadata display.
+ *     -default_values: An array of saved field values for default display.
+ *       -truncation_type: As excepted by truncate_utf8().
+ *       -max_length: As excepted by truncate_utf8().
+ *       -word_safe: As excepted by truncate_utf8().
+ *       -ellipsis: As excepted by truncate_utf8().
+ *       -min_wordsafe_length: As excepted by truncate_utf8().
+ *     -min_wordsafe_length_input_path: The ajax input name path for wordsafe
+ * length.
  */
 function islandora_solr_metadata_retrieve_description($configuration_id, $translate = TRUE) {
-  $result = db_query('SELECT description_field, description_label FROM {islandora_solr_metadata_associations} WHERE configuration_id = :configuration_id', array(':configuration_id' => $configuration_id));
+  $result = db_query('SELECT description_field, description_label, description_data FROM {islandora_solr_metadata_associations} WHERE configuration_id = :configuration_id', array(':configuration_id' => $configuration_id));
   $description = $result->fetchAssoc();
   if ($translate && module_exists('i18n_string')) {
     $i18n_id = islandora_solr_metadata_description_i18n_id($configuration_id);
     $description['description_label'] = i18n_string_translate($i18n_id, $description['description_label']);
   }
+
+  if (!empty($description['description_data'])) {
+    $description['description_data'] = unserialize($description['description_data']);
+  }
+
   return $description;
 }
 
@@ -432,16 +446,20 @@ function islandora_solr_metadata_retrieve_description($configuration_id, $transl
  *   The Solr field which we are grabbing the description value from.
  * @param string $description_label
  *   The label for the description metadata.
+ * @param array $description_data
+ *   An array of extra data to be stored for custom solr metadata display.
  */
-function islandora_solr_metadata_update_description($configuration_id, $description_field, $description_label) {
+function islandora_solr_metadata_update_description($configuration_id, $description_field, $description_label, $description_data = array()) {
   if (empty($description_field)) {
     $description_field = NULL;
     $description_label = NULL;
+    $description_data = NULL;
   }
   db_update('islandora_solr_metadata_associations')
     ->fields(array(
       'description_field' => $description_field,
       'description_label' => $description_label,
+      'description_data' => serialize($description_data),
     ))
     ->condition('configuration_id', $configuration_id)
     ->execute();
