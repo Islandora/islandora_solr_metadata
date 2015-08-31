@@ -17,33 +17,37 @@
  * @return array
  *   An array representing the configuration form.
  */
-function islandora_solr_metadata_config_form($form, $form_state, $configuration_id) {
-  module_load_include('inc', 'islandora', 'includes/content_model.autocomplete');
-  module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
+function islandora_solr_metadata_config_form($form, &$form_state, $configuration_id) {
+  form_load_include($form_state, 'inc', 'islandora', 'includes/content_model.autocomplete');
+  form_load_include($form_state, 'inc', 'islandora_solr_metadata', 'includes/db');
   $field_to_add = FALSE;
   $cmodel_to_add = FALSE;
-  $data = array();
+
+  if (!isset($form_state['field_data'])) {
+    $form_state['field_data'] = islandora_solr_metadata_get_fields($configuration_id, FALSE);
+  }
 
   // AJAX callback handling.
   if (isset($form_state['triggering_element'])) {
     if ($form_state['triggering_element']['#name'] == 'islandora-solr-metadata-add-field') {
-      $field_to_add = array(
-        'solr_field' => filter_xss($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['add_fieldset']['available_solr_fields']),
+      $field_name = $form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['add_fieldset']['available_solr_fields'];
+      $form_state['field_data'][$field_name] = array(
+        'configuration_id' => $configuration_id,
+        'solr_field' => $field_name,
         // Arbitrary large sort weight so it always comes last.
         'weight' => 10000,
+        'ajax-volatile' => TRUE,
       );
     }
 
     if ($form_state['triggering_element']['#name'] == 'islandora-solr-metadata-fields-remove-selected') {
-      $rows_to_remove = array();
-      foreach ($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows'] as $key => $row) {
-        if ($row['remove_field'] == TRUE) {
-          $rows_to_remove[] = $key;
-        }
-      }
-      foreach ($rows_to_remove as $row_number) {
-        unset($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows'][$row_number]);
-      }
+      $to_remove = function ($row) {
+        return $row['remove_field'];
+      };
+      $form_state['field_data'] = array_diff_key(
+        $form_state['field_data'],
+        array_filter($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows'], $to_remove)
+      );
     }
 
     if ($form_state['triggering_element']['#name'] == 'islandora-solr-metadata-cmodels-add-cmodel') {
@@ -148,26 +152,12 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
     '#collapsed' => TRUE,
     '#collapsible' => FALSE,
   );
-  // If there are values in the form_state use them for persistence in case of
-  // AJAX callbacks, otherwise grab fresh values from the database.
-  if (isset($form_state['values'])) {
-    if (isset($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table'])) {
-      $data = $form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows'];
-    }
-  }
-  else {
-    $data = islandora_solr_metadata_get_fields($configuration_id, FALSE);
-  }
-
-  if ($field_to_add !== FALSE) {
-    $data[] = $field_to_add;
-  }
 
   $form['islandora_solr_metadata_fields']['table_wrapper'] = array(
     '#prefix' => '<div id="islandora-solr-metadata-fields-wrapper">',
     '#suffix' => '</div>',
   );
-  $form['islandora_solr_metadata_fields']['table_wrapper']['table'] = islandora_solr_metadata_management($data);
+  $form['islandora_solr_metadata_fields']['table_wrapper']['table'] = islandora_solr_metadata_management($form_state['field_data']);
   if (count($form['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows'])) {
     $form['islandora_solr_metadata_fields']['table_wrapper']['remove_selected'] = array(
       '#type' => 'button',
@@ -208,7 +198,6 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
     '#collapsed' => TRUE,
     '#collapsible' => FALSE,
   );
-
   $description = islandora_solr_metadata_retrieve_description($configuration_id, FALSE);
   $form['islandora_solr_metadata_fields']['description_fieldset']['available_solr_fields'] = array(
     '#type' => 'textfield',
@@ -228,6 +217,20 @@ function islandora_solr_metadata_config_form($form, $form_state, $configuration_
       ),
     ),
   );
+
+  // Add in truncation fields for description.
+  $truncation_config = array(
+    'default_values' => array(
+      'truncation_type' => $description['description_data']['truncation']['truncation_type'] ? $description['description_data']['truncation']['truncation_type'] : 'separate_value_option',
+      'max_length' => $description['description_data']['truncation']['max_length'] ? $description['description_data']['truncation']['max_length'] : 0,
+      'word_safe' => $description['description_data']['truncation']['word_safe'] ? $description['description_data']['truncation']['word_safe'] : FALSE,
+      'ellipsis' => $description['description_data']['truncation']['ellipsis'] ? $description['description_data']['truncation']['ellipsis'] : FALSE,
+      'min_wordsafe_length' => $description['description_data']['truncation']['min_wordsafe_length'] ? $description['description_data']['truncation']['min_wordsafe_length'] : 1,
+    ),
+    'min_wordsafe_length_input_path' => "islandora_solr_metadata_fields[description_fieldset][truncation][word_safe]",
+  );
+  islandora_solr_metadata_add_truncation_to_form($form['islandora_solr_metadata_fields']['description_fieldset'], $truncation_config);
+
   $form['islandora_solr_metadata_save'] = array(
     '#type' => 'submit',
     '#value' => t('Save configuration'),
@@ -259,12 +262,10 @@ function islandora_solr_metadata_config_form_validate($form, $form_state) {
       form_set_error('islandora_solr_metadata_fields][table_wrapper][add_fieldset][available_solr_fields', t('The field @field is not a valid field within Solr!', array('@field' => $form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['add_fieldset']['available_solr_fields'])));
     }
     else {
-      $added_values = array();
-      if (isset($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table'])) {
-        foreach ($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows'] as $row) {
-          $added_values[] = $row['solr_field'];
-        }
-      }
+      $added_values = isset($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']) ?
+        array_keys($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']) :
+        array();
+
       if (in_array($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['add_fieldset']['available_solr_fields'], $added_values)) {
         form_set_error('islandora_solr_metadata_fields][table_wrapper][add_fieldset][available_solr_fields', t('The field @field already exists in this configuration!', array('@field' => $form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['add_fieldset']['available_solr_fields'])));
       }
@@ -322,20 +323,16 @@ function islandora_solr_metadata_config_form_submit($form, $form_state) {
 
   if ($form_state['clicked_button']['#value'] == 'Save configuration') {
     // Grab existing entries first for comparison.
-    $fields_db = islandora_solr_metadata_get_fields($configuration_id, FALSE);
-    if (isset($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table'])) {
-      $fields_fs = $form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows'];
-    }
-    else {
-      $fields_fs = array();
-    }
-
-    // Need to map the fields so that the keys match what we get out of the
-    // database.
-    $fields_fs_mapped = array();
-    foreach ($fields_fs as $field) {
-      $fields_fs_mapped[$field['solr_field']] = $field;
-    }
+    $remove_form_specifics = function ($field) {
+      return array_diff_key($field, drupal_map_assoc(array(
+        'ajax-volatile',
+        'remove',
+        'remove_field',
+      )));
+    };
+    $rows = isset($form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows']) ? $form_state['values']['islandora_solr_metadata_fields']['table_wrapper']['table']['table']['rows'] : array();
+    $fields_fs_mapped = array_map($remove_form_specifics, drupal_array_merge_deep($form_state['field_data'], $rows));
+    $fields_db = islandora_solr_metadata_get_fields($configuration_id);
 
     $cmodels_db = islandora_solr_metadata_get_cmodels($configuration_id);
     $cmodels_fs = $form_state['complete form']['islandora_solr_metadata_cmodels']['table_wrapper']['table']['#options'];
@@ -368,7 +365,14 @@ function islandora_solr_metadata_config_form_submit($form, $form_state) {
 
     $description_field = $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['available_solr_fields'];
     $description_label = $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['display_label'];
-    islandora_solr_metadata_update_description($configuration_id, $description_field, $description_label);
+    $truncation_array['truncation'] = array(
+      'truncation_type' => $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['truncation']['truncation_type'],
+      'max_length' => $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['truncation']['max_length'],
+      'word_safe' => $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['truncation']['word_safe'],
+      'ellipsis' => $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['truncation']['ellipsis'],
+      'min_wordsafe_length' => $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['truncation']['min_wordsafe_length'],
+    );
+    islandora_solr_metadata_update_description($configuration_id, $description_field, $description_label, $truncation_array);
     drupal_set_message(t('The Solr metadata display configuration options have been saved.'));
   }
 
@@ -418,6 +422,7 @@ function islandora_solr_metadata_cmodels_ajax(&$form, &$form_state) {
  */
 function islandora_solr_metadata_management($data) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
+  module_load_include('inc', 'islandora_solr', 'includes/utilities');
   $form = array();
   $rows = array();
 
@@ -425,7 +430,7 @@ function islandora_solr_metadata_management($data) {
     uasort($data, 'drupal_sort_weight');
     $delta = count($data);
     $weight = 1;
-    $map = function($field) use($delta, &$weight) {
+    $map = function ($field) use ($delta, &$weight) {
       $value = $weight;
       $weight++;
       return array(
@@ -434,23 +439,21 @@ function islandora_solr_metadata_management($data) {
           '#default_value' => isset($field['remove']) ? $field['remove'] : FALSE,
         ),
         'solr_field_markup' => array('#markup' => filter_xss($field['solr_field'])),
-        'display_label' => array(
-          '#type' => 'textfield',
-          '#default_value' => isset($field['display_label']) ? filter_xss($field['display_label']) : '',
-        ),
-        'hyperlink' => array(
-          '#type' => 'checkbox',
-          '#default_value' => isset($field['hyperlink']) ? $field['hyperlink'] : FALSE,
+        'operations' => array(
+          'edit' => array(
+            '#access' => isset($field['ajax-volatile']) ? !$field['ajax-volatile'] : TRUE,
+            '#theme' => 'link',
+            '#path' => "admin/islandora/search/islandora_solr_metadata/config/{$field['configuration_id']}/" . islandora_solr_replace_slashes($field['solr_field']),
+            '#text' => t('edit'),
+            '#options' => array(
+              'attributes' => array(),
+              'html' => FALSE,
+            ),
+          ),
         ),
         'weight' => array(
-          '#type' => 'weight',
-          '#title' => t('Weight'),
-          '#default_value' => $value,
-          '#delta' => $delta,
-        ),
-        'solr_field' => array(
-          '#type' => 'value',
-          '#value' => filter_xss($field['solr_field']),
+          '#type' => 'hidden',
+          '#default_value' => $weight,
         ),
       );
     };
@@ -463,8 +466,7 @@ function islandora_solr_metadata_management($data) {
     '#header' => array(
       t('Remove'),
       t('Solr Field'),
-      t('Display Label'),
-      t('Hyperlink'),
+      t('Operations'),
       '',
     ),
     'rows' => $rows,
@@ -472,4 +474,153 @@ function islandora_solr_metadata_management($data) {
     '#empty' => t('No fields associated'),
   );
   return $form;
+}
+
+/**
+ * Form building function; allow configuration of a particular field.
+ */
+function islandora_solr_metadata_config_field_form($form, &$form_state, $config_id, $escaped_field_name) {
+  form_load_include($form_state, 'inc', 'islandora_solr', 'includes/utilities');
+  $field_name = islandora_solr_restore_slashes($escaped_field_name);
+  $get_default = function ($value, $default = '') use ($config_id, $field_name) {
+    static $field_info = NULL;
+    if ($field_info === NULL) {
+      $fields = islandora_solr_metadata_get_fields($config_id);
+      $field_info = $fields[$field_name];
+    }
+    $exists = FALSE;
+    $looked_up = drupal_array_get_nested_value($field_info, (array) $value, $exists);
+    return $exists ? $looked_up : $default;
+  };
+
+  $form['#tree'] = TRUE;
+  $form['wrapper'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Field config'),
+  );
+
+  $set =& $form['wrapper'];
+  $set['display_label'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Display Label'),
+    '#description' => t('A human-readable label to display alongside values found for this field.'),
+    '#default_value' => $get_default('display_label', $field_name),
+  );
+  $set['hyperlink'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Hyperlink?'),
+    '#description' => t('Should each value for this field be linked to a search to find objects with the value in this field?'),
+    '#default_value' => $get_default('hyperlink', FALSE),
+  );
+  // Add in truncation fields for metadata field.
+  $truncation_config = array(
+    'default_values' => array(
+      'truncation_type' => $get_default(array('truncation', 'truncation_type'), 'separate_value_option'),
+      'max_length' => $get_default(array('truncation', 'max_length'), 0),
+      'word_safe' => $get_default(array('truncation', 'word_safe'), FALSE),
+      'ellipsis' => $get_default(array('truncation', 'ellipsis'), FALSE),
+      'min_wordsafe_length' => $get_default(array('truncation', 'min_wordsafe_length'), 1),
+    ),
+    'min_wordsafe_length_input_path' => "wrapper[truncation][word_safe]",
+  );
+  islandora_solr_metadata_add_truncation_to_form($set, $truncation_config);
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save field configuration'),
+  );
+  return $form;
+}
+
+/**
+ * Form validation handler; validate some values.
+ */
+function islandora_solr_metadata_config_field_form_validate(&$form, &$form_state) {
+  if ($form_state['values']['wrapper']['hyperlink'] && $form_state['values']['wrapper']['truncation']['max_length'] > 0) {
+    form_error($form['wrapper']['hyperlink'], t('Either hyperlinking or truncation can be used, but not both together on the same field. Disable one.'));
+    form_error($form['wrapper']['truncation']['max_length']);
+  }
+}
+
+/**
+ * Form submission handler; save the configuration of the field.
+ */
+function islandora_solr_metadata_config_field_form_submit(&$form, &$form_state) {
+  list($config_id, $escaped_field_name) = $form_state['build_info']['args'];
+  $field_name = islandora_solr_restore_slashes($escaped_field_name);
+
+  $fields = islandora_solr_metadata_get_fields($config_id);
+  $field_info = $fields[$field_name];
+
+  $field_info = $form_state['values']['wrapper'] + $field_info;
+  islandora_solr_metadata_update_fields($config_id, array($field_info));
+
+  $form_state['redirect'] = array(
+    "admin/islandora/search/islandora_solr_metadata/config/$config_id",
+  );
+}
+
+
+/**
+ * Generates the truncation field settings section to attach to a form.
+ *
+ * @param array $form
+ *   The location in the form that the truncation should be appended to.
+ *
+ * @param array $field_config
+ *   An associative array containing the following:
+ *   - default_values
+ *      - truncation_type
+ *      - max_length
+ *      - word_safe
+ *      - ellipsis
+ *      - min_wordsafe_length
+ *   - min_wordsafe_length_input_path
+ */
+function islandora_solr_metadata_add_truncation_to_form(&$form, $field_config) {
+  $form['truncation'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Truncation'),
+    'truncation_type' => array(
+      '#type' => 'radios',
+      '#title' => t('Truncation Type'),
+      '#options' => array(
+        'separate_value_option' => t('Limit length of each separate value'),
+        'whole_field_option' => t('Limit Length of the whole field'),
+      ),
+      '#default_value' => $field_config['default_values']['truncation_type'],
+    ),
+    'max_length' => array(
+      '#type' => 'textfield',
+      '#title' => t('Max Length'),
+      '#description' => t('The field contents will be truncated to be at most this length (in characters) for display. 0 or less to disable truncation.<br /> When truncating based on the whole field the max length may be exceeded by the length of ellispse string.'),
+      '#default_value' => $field_config['default_values']['max_length'],
+      '#element_validate' => array('element_validate_integer'),
+    ),
+    'word_safe' => array(
+      '#type' => 'checkbox',
+      '#title' => t('Word-safe'),
+      '#description' => t('Attempt to truncate on a word boundary. See truncate_utf8() for more info.'),
+      '#default_value' => $field_config['default_values']['word_safe'],
+    ),
+    'ellipsis' => array(
+      '#type' => 'checkbox',
+      '#title' => t('Ellipsis'),
+      '#description' => t('Append ellipses when truncating occurs.'),
+      '#default_value' => $field_config['default_values']['ellipsis'],
+    ),
+    'min_wordsafe_length' => array(
+      '#type' => 'textfield',
+      '#title' => t('Minimum word-safe length'),
+      '#default_value' => $field_config['default_values']['min_wordsafe_length'],
+      '#element_validate' => array('element_validate_integer_positive'),
+      '#states' => array(
+        'visible' => array(
+          ':input[name="' . $field_config['min_wordsafe_length_input_path'] . '"]' => array(
+            'checked' => TRUE,
+          ),
+        ),
+      ),
+    ),
+  );
 }

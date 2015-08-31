@@ -28,7 +28,7 @@ function islandora_solr_metadata_general_admin_form($form, &$form_state) {
       '#type' => 'actions',
       'submit' => array(
         '#type' => 'submit',
-        '#value' => t('Submit'),
+        '#value' => t('Save configuration'),
       ),
     ),
   );

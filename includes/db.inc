@@ -167,6 +167,19 @@ function islandora_solr_metadata_get_fields($configuration_id, $translate = TRUE
   $result = db_query('SELECT * FROM {islandora_solr_metadata_fields} WHERE configuration_id = :configuration_id ORDER BY weight', array(':configuration_id' => $configuration_id));
 
   $fields = $result->fetchAllAssoc('solr_field', PDO::FETCH_ASSOC);
+  $deserialize_data = function ($field) {
+    // Merge unserialized blob into field array.
+    $field += unserialize($field['data']);
+
+    // Add in defaults.
+    $field += array(
+      'display_label' => $field['solr_field'],
+      'hyperlink' => 0,
+    );
+
+    return $field;
+  };
+  $fields = array_map($deserialize_data, $fields);
 
   if ($translate && module_exists('i18n_string')) {
     foreach ($fields as $field => &$field_info) {
@@ -276,7 +289,7 @@ function islandora_solr_metadata_configuration_exists($configuration_id) {
  */
 function islandora_solr_metadata_add_content_models($configuration_id, $content_models) {
   $query = db_insert('islandora_solr_metadata_cmodels')
-     ->fields(array('configuration_id', 'cmodel'));
+    ->fields(array('configuration_id', 'cmodel'));
   foreach ($content_models as $content_model) {
     $query->values(array(
       'configuration_id' => $configuration_id,
@@ -321,9 +334,8 @@ function islandora_solr_metadata_add_fields($configuration_id, $fields) {
     ->fields(array(
         'configuration_id',
         'solr_field',
-        'display_label',
-        'hyperlink',
         'weight',
+        'data',
       )
     );
 
@@ -331,9 +343,8 @@ function islandora_solr_metadata_add_fields($configuration_id, $fields) {
     $query->values(array(
       'configuration_id' => $configuration_id,
       'solr_field' => $field['solr_field'],
-      'display_label' => $field['display_label'],
-      'hyperlink' => $field['hyperlink'],
       'weight' => $field['weight'],
+      'data' => serialize(array_diff_key($field, islandora_solr_metadata_fields_non_data_fields())),
     ));
   }
   $query->execute();
@@ -375,12 +386,12 @@ function islandora_solr_metadata_delete_fields($configuration_id, $fields) {
  *   - solr_field
  */
 function islandora_solr_metadata_update_fields($configuration_id, $fields) {
+  $not_data = islandora_solr_metadata_fields_non_data_fields();
   foreach ($fields as $field) {
     db_update('islandora_solr_metadata_fields')
       ->fields(array(
         'weight' => $field['weight'],
-        'display_label' => $field['display_label'],
-        'hyperlink' => $field['hyperlink'],
+        'data' => serialize(array_diff_key($field, $not_data)),
       ))
       ->condition('solr_field', $field['solr_field'])
       ->condition('configuration_id', $configuration_id)
@@ -401,14 +412,28 @@ function islandora_solr_metadata_update_fields($configuration_id, $fields) {
  *   An associative array containing:
  *   -description_field: The Solr field used to generate the description.
  *   -description_label: The display label associated with the description.
+ *   -description_data: An array of extra data for custom solr metadata display.
+ *     -default_values: An array of saved field values for default display.
+ *       -truncation_type: As excepted by truncate_utf8().
+ *       -max_length: As excepted by truncate_utf8().
+ *       -word_safe: As excepted by truncate_utf8().
+ *       -ellipsis: As excepted by truncate_utf8().
+ *       -min_wordsafe_length: As excepted by truncate_utf8().
+ *     -min_wordsafe_length_input_path: The ajax input name path for wordsafe
+ * length.
  */
 function islandora_solr_metadata_retrieve_description($configuration_id, $translate = TRUE) {
-  $result = db_query('SELECT description_field, description_label FROM {islandora_solr_metadata_associations} WHERE configuration_id = :configuration_id', array(':configuration_id' => $configuration_id));
+  $result = db_query('SELECT description_field, description_label, description_data FROM {islandora_solr_metadata_associations} WHERE configuration_id = :configuration_id', array(':configuration_id' => $configuration_id));
   $description = $result->fetchAssoc();
   if ($translate && module_exists('i18n_string')) {
     $i18n_id = islandora_solr_metadata_description_i18n_id($configuration_id);
     $description['description_label'] = i18n_string_translate($i18n_id, $description['description_label']);
   }
+
+  if (!empty($description['description_data'])) {
+    $description['description_data'] = unserialize($description['description_data']);
+  }
+
   return $description;
 }
 
@@ -421,16 +446,20 @@ function islandora_solr_metadata_retrieve_description($configuration_id, $transl
  *   The Solr field which we are grabbing the description value from.
  * @param string $description_label
  *   The label for the description metadata.
+ * @param array $description_data
+ *   An array of extra data to be stored for custom solr metadata display.
  */
-function islandora_solr_metadata_update_description($configuration_id, $description_field, $description_label) {
+function islandora_solr_metadata_update_description($configuration_id, $description_field, $description_label, $description_data = array()) {
   if (empty($description_field)) {
     $description_field = NULL;
     $description_label = NULL;
+    $description_data = NULL;
   }
   db_update('islandora_solr_metadata_associations')
     ->fields(array(
       'description_field' => $description_field,
       'description_label' => $description_label,
+      'description_data' => serialize($description_data),
     ))
     ->condition('configuration_id', $configuration_id)
     ->execute();
@@ -507,4 +536,15 @@ function islandora_solr_metadata_remove_i18n_description($id) {
     $i18n_id = islandora_solr_metadata_description_i18n_id($id);
     i18n_string_remove($i18n_id);
   }
+}
+
+/**
+ * Helper to list the actual columns of "islandora_solr_metadata_fields".
+ *
+ * That is to say, the values which are their own columns in the
+ * "islandora_solr_metadata_fields",
+ */
+function islandora_solr_metadata_fields_non_data_fields() {
+  $schema = drupal_get_schema('islandora_solr_metadata_fields');
+  return $schema['fields'];
 }
