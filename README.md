@@ -36,6 +36,10 @@ For a more indepth look at the metadata display framework and an example module 
 
 It's to be noted that you can have a content model associated with more than one configuration at a time. Similarly, on objects with two content models, two or more configurations could respond to display the markup for the object. These cases are handled by merging the displays based around the weight. Take for example the case where you have two responding configurations where the first configuration contains the a and c fields and the second the b and d fields. The metadata display output would then be in the following order: a, b, c, d. As such, it's at the discretion of the user, through the creation of configurations, to determine how they want their metadata to be displayed.
 
+## Documentation
+
+Further documentation for this module is available at [our wiki](https://wiki.duraspace.org/display/ISLANDORA/Islandora+Solr+Metadata+Display).
+
 ## Troubleshooting/Issues
 
 Having problems or solved a problem? Check out the Islandora google groups for a solution.
@@ -51,7 +55,7 @@ Current maintainers:
 
 ## Development
 
-If you would like to contribute to this module, please check out our helpful [Documentation for Developers](https://github.com/Islandora/islandora/wiki#wiki-documentation-for-developers) info, as well as our [Developers](http://islandora.ca/developers) section on the Islandora.ca site.
+If you would like to contribute to this module, please check out [CONTRIBUTING.md](CONTRIBUTING.md). In addition, we have helpful [Documentation for Developers](https://github.com/Islandora/islandora/wiki#wiki-documentation-for-developers) info, as well as our [Developers](http://islandora.ca/developers) section on the [Islandora.ca](http://islandora.ca) site.
 
 ## License
 
