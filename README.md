@@ -26,6 +26,10 @@ General configuration and metadata field configurations is available at Administ
 
 ![Configuration](https://camo.githubusercontent.com/ae1155798564091ff4623aebe039ef962f8ce9ff/687474703a2f2f692e696d6775722e636f6d2f724b65764e4c632e706e67)
 
+## Documentation
+
+Further documentation for this module is available at [our wiki](https://wiki.duraspace.org/display/ISLANDORA/Islandora+Solr+Metadata+Display)
+
 ### Customization
 
 The backbone of this module is to allow users to select fields indexed in their Solr as what drives metadata displays. This allows for the creation of heterogenous displays pulled from many sources from something that is already easily available.
@@ -51,7 +55,7 @@ Current maintainers:
 
 ## Development
 
-If you would like to contribute to this module, please check out our helpful [Documentation for Developers](https://github.com/Islandora/islandora/wiki#wiki-documentation-for-developers) info, as well as our [Developers](http://islandora.ca/developers) section on the Islandora.ca site.
+If you would like to contribute to this module, please check out [CONTRIBUTING.md](CONTRIBUTING.md). In addition, we have helpful [Documentation for Developers](https://github.com/Islandora/islandora/wiki#wiki-documentation-for-developers) info, as well as our [Developers](http://islandora.ca/developers) section on the [Islandora.ca](http://islandora.ca) site.
 
 ## License
 
