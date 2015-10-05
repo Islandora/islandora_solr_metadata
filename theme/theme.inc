@@ -242,7 +242,9 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
               '@url' => url("islandora/search/", array(
                 "query" => array(
                   "type" => "dismax",
-                  "f[]" => $solr_query,
+                  "f" => array(
+                    $solr_query
+                  ),
                 ),
               )),
               '@val' => $value,
