@@ -236,10 +236,15 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
             }
             $solr_query = format_string('!field:!value', array(
               '!field' => $solr_field,
-              '!value' => rawurlencode(islandora_solr_facet_escape($original_value)),
+              '!value' => islandora_solr_facet_escape($original_value),
             ));
             return t('<a href="@url">@val</a>', array(
-              '@url' => url("islandora/search/") . '?type=dismax&f[0]=' . $solr_query,
+              '@url' => url("islandora/search/", array(
+                "query" => array(
+                  "type" => "dismax",
+                  "f[]" => $solr_query,
+                ),
+              )),
               '@val' => $value,
             ));
           }
