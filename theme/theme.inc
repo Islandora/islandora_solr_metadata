@@ -238,16 +238,13 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
               '!field' => $solr_field,
               '!value' => islandora_solr_facet_escape($original_value),
             ));
-            return t('<a href="@url">@val</a>', array(
-              '@url' => url("islandora/search/", array(
-                "query" => array(
-                  "type" => "dismax",
-                  "f" => array(
-                    $solr_query
-                  ),
+            return l($value, 'islandora/search', array(
+              "query" => array(
+                "type" => "dismax",
+                "f" => array(
+                  $solr_query,
                 ),
-              )),
-              '@val' => $value,
+              ),
             ));
           }
           return $value;
