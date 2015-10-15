@@ -234,11 +234,18 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
               // Will get stripped out later.
               return;
             }
-            $solr_query = format_string('!field:"!value"', array(
+            $solr_query = format_string('!field:!value', array(
               '!field' => $solr_field,
-              '!value' => urlencode(islandora_solr_replace_slashes(islandora_solr_lesser_escape($original_value))),
+              '!value' => islandora_solr_facet_escape($original_value),
             ));
-            return l($value, "islandora/search/$solr_query");
+            return l($value, 'islandora/search', array(
+              "query" => array(
+                "type" => "dismax",
+                "f" => array(
+                  $solr_query,
+                ),
+              ),
+            ));
           }
           return $value;
         };
