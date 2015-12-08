@@ -228,13 +228,13 @@ function islandora_solr_metadata_islandora_metadata_display_info() {
  */
 function islandora_solr_metadata_display_callback(AbstractObject $object, $print = FALSE) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
-  $associations = islandora_solr_metadata_get_associations_by_cmodels($object->models);
-  if (count($associations) > 0) {
-    $elements = array(
-      'islandora_object' => $object,
-      'print' => $print,
-      'associations' => $associations,
-    );
+  $elements = array(
+    'islandora_object' => $object,
+    'print' => $print,
+    'associations' => islandora_solr_metadata_get_associations_by_cmodels($object->models),
+  );
+  drupal_alter('islandora_solr_metadata_display_elements', $elements);
+  if (count($elements['associations']) > 0) {
     return theme('islandora_solr_metadata_display', $elements);
   }
   else {
@@ -253,12 +253,12 @@ function islandora_solr_metadata_display_callback(AbstractObject $object, $print
  */
 function islandora_solr_metadata_description_callback(AbstractObject $object) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
-  $associations = islandora_solr_metadata_get_associations_by_cmodels($object->models);
-  if (count($associations) > 0) {
-    $elements = array(
-      'islandora_object' => $object,
-      'associations' => $associations,
-    );
+  $elements = array(
+    'islandora_object' => $object,
+    'associations' => islandora_solr_metadata_get_associations_by_cmodels($object->models),
+  );
+  drupal_alter('islandora_solr_metadata_description_elements', $elements);
+  if (count($elements['associations']) > 0) {
     return theme('islandora_solr_metadata_description', $elements);
   }
   else {
