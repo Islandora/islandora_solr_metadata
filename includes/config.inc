@@ -254,7 +254,7 @@ function islandora_solr_metadata_config_form($form, &$form_state, $configuration
  */
 function islandora_solr_metadata_config_form_validate($form, $form_state) {
   if ($form_state['triggering_element']['#name'] == 'islandora-solr-metadata-add-field') {
-    module_load_include('inc', 'islandora_solr_search', 'includes/luke');
+    module_load_include('inc', 'islandora_solr', 'includes/luke');
     $solr_luke = islandora_solr_get_luke();
     $luke_fields = array_keys($solr_luke['fields']);
 
@@ -299,7 +299,7 @@ function islandora_solr_metadata_config_form_validate($form, $form_state) {
   if ($form_state['triggering_element']['#value'] == 'Save configuration') {
     $solr_field = $form_state['values']['islandora_solr_metadata_fields']['description_fieldset']['available_solr_fields'];
     if (!empty($solr_field)) {
-      module_load_include('inc', 'islandora_solr_search', 'includes/luke');
+      module_load_include('inc', 'islandora_solr', 'includes/luke');
       $solr_luke = islandora_solr_get_luke();
       $luke_fields = array_keys($solr_luke['fields']);
       if (!in_array($solr_field, $luke_fields)) {
