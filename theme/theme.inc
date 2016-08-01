@@ -260,7 +260,9 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
 
       if (variable_get('islandora_solr_metadata_omit_empty_values', FALSE)) {
         $filter_function = function ($field_info) {
-          return !empty($field_info['value']);
+          // Remove all empty field values to determine if field is empty.
+          $filtered_values = array_filter($field_info['value']);
+          return !empty($filtered_values);
         };
         $filtered = array_filter($solr_fields, $filter_function);
         $solr_fields = $filtered;
