@@ -205,6 +205,7 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
           $field_config = $solr_fields[$solr_field] + array(
             'hyperlink' => 0,
             'formatter' => NULL,
+            'uri_replacement' => '',
           );
           // Replace URI or PID with a configured field.
           if (!empty($field_config['uri_replacement'])) {
