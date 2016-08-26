@@ -205,7 +205,26 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
           $field_config = $solr_fields[$solr_field] + array(
             'hyperlink' => 0,
             'formatter' => NULL,
+            'uri_replacement' => '',
           );
+          // Replace URI or PID with a configured field.
+          if (!empty($field_config['uri_replacement'])) {
+            module_load_include('inc', 'islandora', 'includes/utilities');
+            $pid = str_replace('info:fedora/', '', $value);
+            if (islandora_is_valid_pid($pid)) {
+              $relation_qp = new IslandoraSolrQueryProcessor();
+              $relation_qp->solrQuery = 'PID:"' . $pid . '"';
+              $relation_qp->solrParams['fl'] = "PID,{$field_config['uri_replacement']}";
+              $relation_qp->solrLimit = 1;
+              $relation_qp->executeQuery(FALSE);
+              if ($relation_qp->islandoraSolrResult['response']['numFound'] > 0) {
+                $relation_doc = $relation_qp->islandoraSolrResult['response']['objects'][0]['solr_doc'];
+                if (isset($relation_doc[$field_config['uri_replacement']])) {
+                  $value = $relation_doc[$field_config['uri_replacement']];
+                }
+              }
+            }
+          }
           if (($truncation = drupal_array_get_nested_value($field_config, array('truncation'))) && $truncation['max_length'] > 0 && (!isset($truncation['truncation_type']) || $truncation['truncation_type'] == 'separate_value_option')) {
             $value = truncate_utf8($value, $truncation['max_length'], $truncation['word_safe'], $truncation['ellipsis'], $truncation['min_wordsafe_length']);
             if ($value !== $original_value) {
