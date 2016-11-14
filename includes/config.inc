@@ -531,12 +531,84 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
     'min_wordsafe_length_input_path' => "wrapper[truncation][word_safe]",
   );
   islandora_solr_metadata_add_truncation_to_form($set, $truncation_config);
+  $permissions = $get_default('permissions');
+  islandora_solr_metadata_append_permissions_and_actions($permissions, $set, FALSE);
 
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save field configuration'),
   );
   return $form;
+}
+
+/**
+ * Genereate the element definition for the permission fieldset.
+ *
+ * @param bool|array $permissions
+ *   The selected permissions (from the $form_state) either an array containing
+ *   key values, or FALSE if it is not enabled.
+ * @param array $permissions_default
+ *   The permissions to select by default.
+ * @param array $permissions_disable
+ *   Some permissions which we will not allow to be changed (set as disabled in
+ *   the form).
+ * @param bool $default_value
+ *   Whether the checkbox is to be checked by default.
+ *
+ * @return array
+ *   An associative array containing the definition for the permissions
+ *   fieldset.
+ */
+function islandora_solr_metadata_get_admin_permissions_fieldset($permissions, $permissions_default, $permissions_disable, $default_value) {
+  $default_enable = array_sum($permissions) > 0 ? TRUE : $default_value;
+  $permissions_fieldset = array(
+    '#type' => 'fieldset',
+    '#title' => t('Permissions'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    'enable_permissions' => array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable permissions'),
+      '#default_value' => $default_enable,
+    ),
+    'permissions' => array(
+      '#type' => 'checkboxes',
+      '#title' => t('Permissions'),
+      '#options' => user_roles(),
+      '#default_value' => !empty($permissions) ? $permissions : $permissions_default,
+      '#description' => t('Select which roles can access this field.<br /><strong>Note:</strong> checkboxes may be grayed out for roles which do not have permission to search the Solr index.'),
+      '#states' => array(
+        'visible' => array(
+          ':input[name="wrapper[permissions][enable_permissions]"]' => array('checked' => TRUE),
+        ),
+      ),
+    ),
+  );
+  foreach ($permissions_disable as $rid) {
+    $permissions_fieldset['permissions'][$rid] = array(
+      '#disabled' => TRUE,
+    );
+  }
+
+  return $permissions_fieldset;
+}
+
+/**
+ * Utility function to append permissions and actions to the modal.
+ *
+ * @param array $values
+ *   An array of values.
+ * @param array $form
+ *   An array representing the Drupal form, passed by reference.
+ * @param bool $default_value
+ *   Whether the default enabled checkbox is to be TRUE or FALSE. *
+ */
+function islandora_solr_metadata_append_permissions_and_actions($values, &$form, $default_value = TRUE) {
+  module_load_include('inc', 'islandora_solr', 'includes/admin');
+  $permissions = isset($values['permissions']) ? $values['permissions'] : array();
+  $permissions_disable = _islandora_solr_permissions_disable();
+  $permissions_default = _islandora_solr_permissions_default();
+  $form['permissions'] = islandora_solr_metadata_get_admin_permissions_fieldset($permissions, $permissions_default, $permissions_disable, $default_value);
 }
 
 /**
@@ -560,11 +632,14 @@ function islandora_solr_metadata_config_field_form_submit(&$form, &$form_state) 
   $field_info = $fields[$field_name];
 
   $field_info = $form_state['values']['wrapper'] + $field_info;
+  dsm($field_info, "field info");
   islandora_solr_metadata_update_fields($config_id, array($field_info));
 
   $form_state['redirect'] = array(
     "admin/islandora/search/islandora_solr_metadata/config/$config_id",
   );
+  dsm($form, "form");
+  dsm($form_state, "form state");
 }
 
 

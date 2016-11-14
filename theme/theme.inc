@@ -185,6 +185,8 @@ function template_process_islandora_solr_metadata_description(array &$variables)
 function islandora_solr_metadata_query_fields($object, &$solr_fields) {
   module_load_include('inc', 'islandora_solr', 'includes/utilities');
   if (!empty($solr_fields)) {
+    global $user;
+
     $query_processor = new IslandoraSolrQueryProcessor();
     $query_processor->solrQuery = 'PID:"' . $object->id . '"';
     $query_processor->solrParams['fl'] = '*';
@@ -200,7 +202,7 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
         // modified to get around a bug in PHP 5.3.3 when used on CentOS 6.6,
         // otherwise the calling function doesn't maintain a reference to the
         // original value and it becomes a copy.
-        $get_display_value = function ($original_value) use ($solr_field, &$solr_fields) {
+        $get_display_value = function ($original_value) use ($solr_field, &$solr_fields, $user) {
           $value = $original_value;
           $field_config = $solr_fields[$solr_field] + array(
             'hyperlink' => 0,
@@ -244,6 +246,7 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
               ));
             }
           }
+
           if (is_callable($field_config['formatter'])) {
             $value = call_user_func($field_config['formatter'], $value);
           }
@@ -304,6 +307,18 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
           $field['value'] = $updated_value;
         }
         unset($field);
+
+        // Apply rules configurations for this field as configured
+        // on the metadata configuration page. Unset the field from
+        // the $solr_fields array to prevent it from being shown.
+        $permission = drupal_array_get_nested_value($solr_fields[$solr_field], array('permissions'));
+        if ($permission['enable_permissions'] == 1) {
+          foreach ($user->roles as $rid => $role_name) {
+            if (!in_array($rid, $permission['permissions'])) {
+              unset($solr_fields[$solr_field]);
+            }
+          }
+        }
       }
 
       uasort($solr_fields, 'drupal_sort_weight');

@@ -27,6 +27,7 @@
       <?php $row_field = 0; ?>
       <?php foreach($solr_fields as $value): ?>
         <dt class="<?php print $row_field == 0 ? ' first' : ''; ?>">
+          <?php dsm($value, "value:::??");?>
           <?php print $value['display_label']; ?>
         </dt>
         <dd class="<?php print $row_field == 0 ? ' first' : ''; ?>">
