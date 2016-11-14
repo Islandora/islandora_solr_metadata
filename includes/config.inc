@@ -632,16 +632,12 @@ function islandora_solr_metadata_config_field_form_submit(&$form, &$form_state) 
   $field_info = $fields[$field_name];
 
   $field_info = $form_state['values']['wrapper'] + $field_info;
-  dsm($field_info, "field info");
   islandora_solr_metadata_update_fields($config_id, array($field_info));
 
   $form_state['redirect'] = array(
     "admin/islandora/search/islandora_solr_metadata/config/$config_id",
   );
-  dsm($form, "form");
-  dsm($form_state, "form state");
 }
-
 
 /**
  * Generates the truncation field settings section to attach to a form.
