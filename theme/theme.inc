@@ -306,16 +306,15 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
           // Replace value with updated field display.
           $field['value'] = $updated_value;
         }
-        unset($field);
 
         // Apply rules configurations for this field as configured
         // on the metadata configuration page. Unset the field from
         // the $solr_fields array to prevent it from being shown.
-        $permission = drupal_array_get_nested_value($solr_fields[$solr_field], array('permissions'));
+        $permission = drupal_array_get_nested_value($field, array('permissions'));
         if ($permission['enable_permissions'] == 1) {
           foreach ($user->roles as $rid => $role_name) {
             if (!in_array($rid, $permission['permissions'])) {
-              unset($solr_fields[$solr_field]);
+              unset($solr_fields[$field['solr_field']]);
             }
           }
         }
