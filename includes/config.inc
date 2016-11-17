@@ -531,7 +531,13 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
     'min_wordsafe_length_input_path' => "wrapper[truncation][word_safe]",
   );
   islandora_solr_metadata_add_truncation_to_form($set, $truncation_config);
-  $permissions = $get_default(array('permissions'), array());
+  $permissions = $get_default(
+    array('permissions'),
+    array(
+      'enable_permissions' => FALSE,
+      'permissions' => array(),
+    )
+  );
   islandora_solr_metadata_append_permissions_and_actions($permissions, $set);
 
   $form['submit'] = array(
@@ -542,7 +548,7 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
 }
 
 /**
- * Genereate the element definition for the permission fieldset.
+ * Generate the element definition for the permission fieldset.
  *
  * @param array $permissions
  *   The selected permissions array containing
