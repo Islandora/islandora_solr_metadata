@@ -601,12 +601,13 @@ function islandora_solr_metadata_get_admin_permissions_fieldset($permissions, $p
 /**
  * Utility function to append permissions and actions to the modal.
  *
- * @param array $values
- *   An array of values.
+ * @param array $permissions
+ *   The selected permissions array containing
+ *   key values:
+ *     'enable_permissions' => bool (enable/disable permissions),
+ *     'permissions' => array (an array of permissions to apply)
  * @param array $form
  *   An array representing the Drupal form, passed by reference.
- * @param bool $default_value
- *   Whether the default enabled checkbox is to be TRUE or FALSE.
  */
 function islandora_solr_metadata_append_permissions_and_actions($permissions, &$form) {
   module_load_include('inc', 'islandora_solr', 'includes/admin');
