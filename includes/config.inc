@@ -532,8 +532,7 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
   );
   islandora_solr_metadata_add_truncation_to_form($set, $truncation_config);
   $permissions = $get_default(array('permissions'), array());
-  dsm($permissions, "permissions");
-  islandora_solr_metadata_append_permissions_and_actions($permissions, $set, FALSE);
+  islandora_solr_metadata_append_permissions_and_actions($permissions, $set);
 
   $form['submit'] = array(
     '#type' => 'submit',
@@ -546,7 +545,7 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
  * Genereate the element definition for the permission fieldset.
  *
  * @param array $permissions
- *   The selected permissions (from the $form_state) either an array containing
+ *   The selected permissions array containing
  *   key values:
  *     'enable_permissions' => bool (enable/disable permissions),
  *     'permissions' => array (an array of permissions to apply)
@@ -555,14 +554,12 @@ function islandora_solr_metadata_config_field_form($form, &$form_state, $config_
  * @param array $permissions_disable
  *   Some permissions which we will not allow to be changed (set as disabled in
  *   the form).
- * @param bool $default_value
- *   Whether the checkbox is to be checked by default.
  *
  * @return array
  *   An associative array containing the definition for the permissions
  *   fieldset.
  */
-function islandora_solr_metadata_get_admin_permissions_fieldset($permissions, $permissions_default, $permissions_disable, $default_value) {
+function islandora_solr_metadata_get_admin_permissions_fieldset($permissions, $permissions_default, $permissions_disable) {
   $permissions_fieldset = array(
     '#type' => 'fieldset',
     '#title' => t('Permissions'),
@@ -577,7 +574,7 @@ function islandora_solr_metadata_get_admin_permissions_fieldset($permissions, $p
       '#type' => 'checkboxes',
       '#title' => t('Permissions'),
       '#options' => user_roles(),
-      '#default_value' => $permissions['permissions'],
+      '#default_value' => !empty($permissions['permissions']) ? $permissions['permissions'] : $permissions_default,
       '#description' => t('Select which roles can access this field.<br /><strong>Note:</strong> checkboxes may be grayed out for roles which do not have permission to search the Solr index.'),
       '#states' => array(
         'visible' => array(
@@ -605,14 +602,11 @@ function islandora_solr_metadata_get_admin_permissions_fieldset($permissions, $p
  * @param bool $default_value
  *   Whether the default enabled checkbox is to be TRUE or FALSE.
  */
-function islandora_solr_metadata_append_permissions_and_actions($permissions, &$form, $default_value = TRUE) {
+function islandora_solr_metadata_append_permissions_and_actions($permissions, &$form) {
   module_load_include('inc', 'islandora_solr', 'includes/admin');
-  //$permissions = isset($values['permissions']) ? $values['permissions'] : array();
   $permissions_disable = _islandora_solr_permissions_disable();
   $permissions_default = _islandora_solr_permissions_default();
-  dsm($permissions_disable, "disable perm");
-  dsm($permissions_default, "default perm");
-  $form['permissions'] = islandora_solr_metadata_get_admin_permissions_fieldset($permissions, $permissions_default, $permissions_disable, $default_value);
+  $form['permissions'] = islandora_solr_metadata_get_admin_permissions_fieldset($permissions, $permissions_default, $permissions_disable);
 }
 
 /**
