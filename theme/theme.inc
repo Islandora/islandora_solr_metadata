@@ -202,7 +202,7 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
         // modified to get around a bug in PHP 5.3.3 when used on CentOS 6.6,
         // otherwise the calling function doesn't maintain a reference to the
         // original value and it becomes a copy.
-        $get_display_value = function ($original_value) use ($solr_field, &$solr_fields, $user) {
+        $get_display_value = function ($original_value) use ($solr_field, &$solr_fields) {
           $value = $original_value;
           $field_config = $solr_fields[$solr_field] + array(
             'hyperlink' => 0,
