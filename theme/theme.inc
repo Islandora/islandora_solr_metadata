@@ -185,6 +185,8 @@ function template_process_islandora_solr_metadata_description(array &$variables)
 function islandora_solr_metadata_query_fields($object, &$solr_fields) {
   module_load_include('inc', 'islandora_solr', 'includes/utilities');
   if (!empty($solr_fields)) {
+    global $user;
+
     $query_processor = new IslandoraSolrQueryProcessor();
     $query_processor->solrQuery = 'PID:"' . $object->id . '"';
     $query_processor->solrParams['fl'] = '*';
@@ -244,6 +246,7 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
               ));
             }
           }
+
           if (is_callable($field_config['formatter'])) {
             $value = call_user_func($field_config['formatter'], $value);
           }
@@ -303,7 +306,15 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
           // Replace value with updated field display.
           $field['value'] = $updated_value;
         }
-        unset($field);
+
+        // Apply rules configurations for this field as configured
+        // on the metadata configuration page. Unset the field from
+        // the $solr_fields array to prevent it from being shown.
+        $permission = drupal_array_get_nested_value($field, array('permissions'));
+        if ($permission['enable_permissions'] && !array_intersect(array_keys($user->roles), $permission['permissions'])) {
+          // Permissions are being enforced and none of our roles are allowed...
+          unset($solr_fields[$field['solr_field']]);
+        }
       }
 
       uasort($solr_fields, 'drupal_sort_weight');
