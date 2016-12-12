@@ -439,6 +439,7 @@ function islandora_solr_metadata_management($data) {
           '#default_value' => isset($field['remove']) ? $field['remove'] : FALSE,
         ),
         'solr_field_markup' => array('#markup' => filter_xss($field['solr_field'])),
+        'label' => array('#markup' => empty($field['display_label']) ? filter_xss($field['solr_field']) : filter_xss($field['display_label'])),
         'operations' => array(
           'edit' => array(
             '#access' => isset($field['ajax-volatile']) ? !$field['ajax-volatile'] : TRUE,
@@ -466,6 +467,7 @@ function islandora_solr_metadata_management($data) {
     '#header' => array(
       t('Remove'),
       t('Solr Field'),
+      t('Label'),
       t('Operations'),
       '',
     ),

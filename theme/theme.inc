@@ -18,6 +18,7 @@ function theme_islandora_solr_metadata_management_table(array $variables) {
       'data' => array(
         drupal_render($row['remove_field']),
         drupal_render($row['solr_field_markup']),
+        drupal_render($row['label']),
         drupal_render($row['operations']),
         drupal_render($row['weight']),
       ),
