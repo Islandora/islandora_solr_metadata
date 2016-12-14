@@ -142,7 +142,7 @@ function template_process_islandora_solr_metadata_description(array &$variables)
             $field['description_data']['truncation']['ellipsis'],
             $field['description_data']['truncation']['word_safe'],
             $field['description_data']['truncation']['min_wordsafe_length'],
-            "\n"
+            variable_get('islandora_solr_search_field_value_separator', "\n")
           );
           $field['value'] = $updated_value;
         }
@@ -154,7 +154,7 @@ function template_process_islandora_solr_metadata_description(array &$variables)
               $field['description_data']['truncation']['ellipsis'],
               $field['description_data']['truncation']['word_safe'],
               $field['description_data']['truncation']['min_wordsafe_length'],
-              " "
+              variable_get('islandora_solr_search_field_value_separator', ' ')
             );
           }
         }
@@ -302,7 +302,7 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
         // Check if the field is configured to filter based on whole field.
         if (($truncation = drupal_array_get_nested_value($field, array('truncation'))) && $truncation['max_length'] > 0 && isset($truncation['truncation_type']) && $truncation['truncation_type'] == 'whole_field_option') {
           // Keep the updated value stored in an array.
-          $updated_value[] = islandora_solr_truncate_field_display($field['value'], $truncation['max_length'], $truncation['ellipsis'], $truncation['word_safe'], $truncation['min_wordsafe_length'], "\n");
+          $updated_value[] = islandora_solr_truncate_field_display($field['value'], $truncation['max_length'], $truncation['ellipsis'], $truncation['word_safe'], $truncation['min_wordsafe_length'], variable_get('islandora_solr_search_field_value_separator', '\n'));
           // Replace value with updated field display.
           $field['value'] = $updated_value;
         }
