@@ -138,6 +138,7 @@ function template_process_islandora_solr_metadata_description(array &$variables)
         if ($field['description_data']['truncation']['truncation_type'] == 'whole_field_option') {
           $updated_value[] = islandora_solr_truncate_field_display(
             $field['value'],
+            "Brandon",
             $field['description_data']['truncation']['max_length'],
             $field['description_data']['truncation']['ellipsis'],
             $field['description_data']['truncation']['word_safe'],
