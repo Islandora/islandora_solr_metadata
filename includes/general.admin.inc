@@ -43,15 +43,6 @@ function islandora_solr_metadata_general_admin_form($form, &$form_state) {
 }
 
 /**
- * Validation handler for general config form.
- */
-function islandora_solr_metadata_general_admin_form_validate(&$form, &$form_state) {
-  if (empty($form_state['values']['islandora_solr_metadata_field_value_separator'])) {
-    $form_state['values']['islandora_solr_metadata_field_value_separator'] = NULL;
-  }
-}
-
-/**
  * Submission handler for general config form.
  */
 function islandora_solr_metadata_general_admin_form_submit(&$form, &$form_state) {

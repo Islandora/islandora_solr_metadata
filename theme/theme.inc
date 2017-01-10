@@ -74,6 +74,10 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
   }
 
   $variables['parent_collections'] = islandora_get_parents_from_rels_ext($object);
+  $variables['separator'] = variable_get('islandora_solr_metadata_field_value_separator', '');
+  if (empty($variables['separator'])) {
+    $variables['separator'] = "\n";
+  }
 }
 
 /**
@@ -118,6 +122,10 @@ function template_preprocess_islandora_solr_metadata_description(array &$variabl
       'description_data' => $description['description_data'],
     );
   }
+  $variables['separator'] = variable_get('islandora_solr_metadata_field_value_separator', '');
+  if (empty($variables['separator'])) {
+    $variables['separator'] = "\n";
+  }
 }
 
 /**
@@ -136,18 +144,25 @@ function template_process_islandora_solr_metadata_description(array &$variables)
         module_load_include('inc', 'islandora_solr', 'includes/utilities');
         $field['value'] = array_filter($field['value']);
         if ($field['description_data']['truncation']['truncation_type'] == 'whole_field_option') {
+          $separator = variable_get('islandora_solr_search_field_value_separator', '');
+          if (empty($separator)) {
+            $separator = "\n";
+          }
           $updated_value[] = islandora_solr_truncate_field_display(
             $field['value'],
-            "Brandon",
             $field['description_data']['truncation']['max_length'],
             $field['description_data']['truncation']['ellipsis'],
             $field['description_data']['truncation']['word_safe'],
             $field['description_data']['truncation']['min_wordsafe_length'],
-            variable_get('islandora_solr_metadata_field_value_separator', "\n")
+            $separator
           );
           $field['value'] = $updated_value;
         }
         else {
+          $separator = variable_get('islandora_solr_search_field_value_separator', '');
+          if (empty($separator)) {
+            $separator = ' ';
+          }
           foreach ($field['value'] as $index => $value) {
             $field['value'][$index] = islandora_solr_truncate_field_display(
               (array) $value,
@@ -155,7 +170,7 @@ function template_process_islandora_solr_metadata_description(array &$variables)
               $field['description_data']['truncation']['ellipsis'],
               $field['description_data']['truncation']['word_safe'],
               $field['description_data']['truncation']['min_wordsafe_length'],
-              variable_get('islandora_solr_metadata_field_value_separator', ' ')
+              $separator
             );
           }
         }
