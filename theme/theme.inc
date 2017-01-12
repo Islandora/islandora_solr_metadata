@@ -74,10 +74,7 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
   }
 
   $variables['parent_collections'] = islandora_get_parents_from_rels_ext($object);
-  $variables['separator'] = variable_get('islandora_solr_metadata_field_value_separator', '');
-  if (empty($variables['separator'])) {
-    $variables['separator'] = "\n";
-  }
+  $variables['separator'] = variable_get('islandora_solr_metadata_field_value_separator', "\n");
 }
 
 /**
@@ -122,10 +119,7 @@ function template_preprocess_islandora_solr_metadata_description(array &$variabl
       'description_data' => $description['description_data'],
     );
   }
-  $variables['separator'] = variable_get('islandora_solr_metadata_field_value_separator', '');
-  if (empty($variables['separator'])) {
-    $variables['separator'] = "\n";
-  }
+  $variables['separator'] = variable_get('islandora_solr_metadata_field_value_separator', "\n");
 }
 
 /**
@@ -137,6 +131,7 @@ function template_process_islandora_solr_metadata_description(array &$variables)
   // XXX: Seems a little odd, yes... Was reusing the "description" value,
   // though.
   $variables['description'] = $variables['solr_fields'];
+  $separator = variable_get('islandora_solr_search_field_value_separator', "\n");
   // Truncate the description value(s).
   foreach ($variables['description'] as &$field) {
     if (isset($field['description_data']['truncation'])) {
@@ -144,10 +139,6 @@ function template_process_islandora_solr_metadata_description(array &$variables)
         module_load_include('inc', 'islandora_solr', 'includes/utilities');
         $field['value'] = array_filter($field['value']);
         if ($field['description_data']['truncation']['truncation_type'] == 'whole_field_option') {
-          $separator = variable_get('islandora_solr_search_field_value_separator', '');
-          if (empty($separator)) {
-            $separator = "\n";
-          }
           $updated_value[] = islandora_solr_truncate_field_display(
             $field['value'],
             $field['description_data']['truncation']['max_length'],
@@ -159,10 +150,6 @@ function template_process_islandora_solr_metadata_description(array &$variables)
           $field['value'] = $updated_value;
         }
         else {
-          $separator = variable_get('islandora_solr_search_field_value_separator', '');
-          if (empty($separator)) {
-            $separator = ' ';
-          }
           foreach ($field['value'] as $index => $value) {
             $field['value'][$index] = islandora_solr_truncate_field_display(
               (array) $value,
