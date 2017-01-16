@@ -131,7 +131,7 @@ function template_process_islandora_solr_metadata_description(array &$variables)
   // XXX: Seems a little odd, yes... Was reusing the "description" value,
   // though.
   $variables['description'] = $variables['solr_fields'];
-  $separator = variable_get('islandora_solr_search_field_value_separator', "\n");
+  $separator = variable_get('islandora_solr_metadata_field_value_separator', "\n");
   // Truncate the description value(s).
   foreach ($variables['description'] as &$field) {
     if (isset($field['description_data']['truncation'])) {
