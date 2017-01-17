@@ -157,7 +157,7 @@ function template_process_islandora_solr_metadata_description(array &$variables)
               $field['description_data']['truncation']['ellipsis'],
               $field['description_data']['truncation']['word_safe'],
               $field['description_data']['truncation']['min_wordsafe_length'],
-              $separator
+              " "
             );
           }
         }
