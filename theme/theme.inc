@@ -72,9 +72,13 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
       'value' => array(),
     );
   }
+  $separator = variable_get('islandora_solr_metadata_field_value_separator', "\n");
 
+  if (empty($separator)) {
+    $separator = "\n";
+  }
+  $variables['separator'] = $separator;
   $variables['parent_collections'] = islandora_get_parents_from_rels_ext($object);
-  $variables['separator'] = variable_get('islandora_solr_metadata_field_value_separator', "\n");
 }
 
 /**
@@ -119,7 +123,12 @@ function template_preprocess_islandora_solr_metadata_description(array &$variabl
       'description_data' => $description['description_data'],
     );
   }
-  $variables['separator'] = variable_get('islandora_solr_metadata_field_value_separator', "\n");
+  $separator = variable_get('islandora_solr_metadata_field_value_separator', "\n");
+
+  if (empty($separator)) {
+    $separator = "\n";
+  }
+  $variables['separator'] = $separator;
 }
 
 /**
@@ -132,6 +141,10 @@ function template_process_islandora_solr_metadata_description(array &$variables)
   // though.
   $variables['description'] = $variables['solr_fields'];
   $separator = variable_get('islandora_solr_metadata_field_value_separator', "\n");
+
+  if (empty($separator)) {
+    $separator = "\n";
+  }
   // Truncate the description value(s).
   foreach ($variables['description'] as &$field) {
     if (isset($field['description_data']['truncation'])) {

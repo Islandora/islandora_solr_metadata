@@ -27,9 +27,8 @@ function islandora_solr_metadata_general_admin_form($form, &$form_state) {
     'islandora_solr_metadata_field_value_separator' => array(
       '#type' => 'textfield',
       '#title' => t('Field value separator'),
-      '#description' => t('Characters to separate values in multivalued fields.'),
+      '#description' => t('Characters to separate values in multivalued fields. If left empty it will default to newline.'),
       '#default_value' => variable_get('islandora_solr_metadata_field_value_separator', "\n"),
-      '#required' => TRUE,
     ),
     'actions' => array(
       '#type' => 'actions',
