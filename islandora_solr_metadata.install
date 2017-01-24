@@ -111,6 +111,7 @@ function islandora_solr_metadata_uninstall() {
   $variables = array(
     'islandora_solr_metadata_omit_empty_values',
     'islandora_solr_metadata_dedup_values',
+    'islandora_solr_metadata_field_value_separator',
   );
   array_walk($variables, 'variable_del');
 }

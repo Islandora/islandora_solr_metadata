@@ -24,6 +24,12 @@ function islandora_solr_metadata_general_admin_form($form, &$form_state) {
       '#description' => t('Only show unique values from each field. NOTE: Uniqueness is checked on values directly out of Solr. Later formatting of the value could break uniqueness.'),
       '#default_value' => variable_get('islandora_solr_metadata_dedup_values', FALSE),
     ),
+    'islandora_solr_metadata_field_value_separator' => array(
+      '#type' => 'textfield',
+      '#title' => t('Field value separator'),
+      '#description' => t('Characters to separate values in multivalued fields. If left empty it will default to newline.'),
+      '#default_value' => variable_get('islandora_solr_metadata_field_value_separator', "\n"),
+    ),
     'actions' => array(
       '#type' => 'actions',
       'submit' => array(
@@ -43,6 +49,7 @@ function islandora_solr_metadata_general_admin_form_submit(&$form, &$form_state)
   $variables = array(
     'islandora_solr_metadata_omit_empty_values',
     'islandora_solr_metadata_dedup_values',
+    'islandora_solr_metadata_field_value_separator',
   );
 
   foreach ($variables as $variable) {

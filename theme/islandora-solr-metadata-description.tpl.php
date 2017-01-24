@@ -21,12 +21,12 @@
         print ($desc_array['display_label']); ?>
         <?php endif; ?></h2>
       <?php foreach($description as $value): ?>
-        <p property="description"><?php print check_markup(implode("\n", $value['value']), 'islandora_solr_metadata_filtered_html'); ?></p>
+        <p property="description"><?php print check_markup(implode($variables['separator'], $value['value']), 'islandora_solr_metadata_filtered_html'); ?></p>
       <?php endforeach; ?>
     <?php else: ?>
       <?php foreach ($description as $value): ?>
         <h2><?php print $value['display_label']; ?></h2>
-        <p><?php print check_markup(implode("\n", $value['value']), 'islandora_solr_metadata_filtered_html'); ?></p>
+        <p><?php print check_markup(implode($variables['separator'], $value['value']), 'islandora_solr_metadata_filtered_html'); ?></p>
       <?php endforeach; ?>
     <?php endif; ?>
   </div>
