@@ -453,7 +453,7 @@ function islandora_solr_metadata_management($data) {
           ),
         ),
         'weight' => array(
-          '#type' => 'hidden',
+          '#type' => 'weight',
           '#default_value' => $weight,
         ),
       );
