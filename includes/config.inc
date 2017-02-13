@@ -453,7 +453,7 @@ function islandora_solr_metadata_management($data) {
           ),
         ),
         'weight' => array(
-          '#type' => 'hidden',
+          '#type' => 'weight',
           '#default_value' => $weight,
         ),
       );
@@ -469,7 +469,7 @@ function islandora_solr_metadata_management($data) {
       t('Solr Field'),
       t('Label'),
       t('Operations'),
-      '',
+      t('Weight'),
     ),
     'rows' => $rows,
     '#theme' => 'islandora_solr_metadata_management_table',
