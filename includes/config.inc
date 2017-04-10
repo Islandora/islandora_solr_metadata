@@ -428,9 +428,9 @@ function islandora_solr_metadata_management($data) {
 
   if ($data) {
     uasort($data, 'drupal_sort_weight');
-    $delta = count($data);
-    $weight = 1;
-    $map = function ($field) use ($delta, &$weight) {
+    $max_delta = max(count($data), 10);
+    $weight = 0;
+    $map = function ($field) use ($max_delta, &$weight) {
       $value = $weight;
       $weight++;
       return array(
@@ -454,6 +454,7 @@ function islandora_solr_metadata_management($data) {
         ),
         'weight' => array(
           '#type' => 'weight',
+          '#delta' => $max_delta,
           '#default_value' => $weight,
         ),
       );
