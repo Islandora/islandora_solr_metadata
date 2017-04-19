@@ -28,7 +28,9 @@ General configuration and metadata field configurations is available at Administ
 
 ## Notes
 
-* To use Solr Metadata with Scholar's citation/thesis cModels, please enable the `Use Standard Metadata Display` option in **Administration** >> **Islandora** >> **Solution pack configuration** >> **Scholar**.
+* To use Solr Metadata with Scholar's citation/thesis cModels, please enable the `Use Standard Metadata Display` option in Administration >> Islandora >> Solution pack configuration >> Scholar (/admin/islandora/solution_pack_config/scholar).
+
+![Configuration](https://cloud.githubusercontent.com/assets/2052902/25194782/7e9bef70-2509-11e7-9167-737ea21982d0.png)
 
 ### Customization
 
