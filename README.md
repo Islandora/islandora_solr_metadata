@@ -26,6 +26,12 @@ General configuration and metadata field configurations is available at Administ
 
 ![Configuration](https://camo.githubusercontent.com/ae1155798564091ff4623aebe039ef962f8ce9ff/687474703a2f2f692e696d6775722e636f6d2f724b65764e4c632e706e67)
 
+## Notes
+
+* To use Solr Metadata with Scholar's citation/thesis cModels, please enable the `Use Standard Metadata Display` option in Administration >> Islandora >> Solution pack configuration >> Scholar (/admin/islandora/solution_pack_config/scholar).
+
+![Configuration](https://cloud.githubusercontent.com/assets/2052902/25194782/7e9bef70-2509-11e7-9167-737ea21982d0.png)
+
 ### Customization
 
 The backbone of this module is to allow users to select fields indexed in their Solr as what drives metadata displays. This allows for the creation of heterogenous displays pulled from many sources from something that is already easily available.
