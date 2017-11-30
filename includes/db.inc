@@ -483,7 +483,9 @@ function islandora_solr_metadata_update_i18n_strings($id, $fields) {
   if (module_exists('i18n_string')) {
     foreach ($fields as $field => $info) {
       $i18n_id = islandora_solr_metadata_field_i18n_id($id, $info['solr_field']);
-      i18n_string_update($i18n_id, $info['display_label']);
+      if (isset($info['display_label'])) {
+        i18n_string_update($i18n_id, $info['display_label']);
+      }
     }
   }
 }
