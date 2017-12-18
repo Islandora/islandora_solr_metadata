@@ -60,7 +60,7 @@ function islandora_solr_metadata_config_form($form, &$form_state, $configuration
           unset($form_state['complete form']['islandora_solr_metadata_cmodels']['table_wrapper']['table']['#options'][$key]);
         }
       }
-    }
+   }
   }
   $form = array(
     '#tree' => TRUE,
@@ -146,13 +146,20 @@ function islandora_solr_metadata_config_form($form, &$form_state, $configuration
     );
   }
 
+   $form['islandora_solr_metadata_collapse_' . $configuration_id] = array(
+    '#title' => 'Display fields expanded',
+    '#type' => 'checkbox',
+    '#description' => t('Unselect to have details collapsed'),
+    '#default_value' => variable_get('islandora_solr_metadata_collapse_' . $configuration_id, 1),
+
+  );
+
   $form['islandora_solr_metadata_fields'] = array(
     '#type' => 'fieldset',
     '#title' => 'Display fields',
     '#collapsed' => TRUE,
     '#collapsible' => FALSE,
   );
-
   $form['islandora_solr_metadata_fields']['table_wrapper'] = array(
     '#prefix' => '<div id="islandora-solr-metadata-fields-wrapper">',
     '#suffix' => '</div>',
@@ -217,6 +224,8 @@ function islandora_solr_metadata_config_form($form, &$form_state, $configuration
       ),
     ),
   );
+
+  
 
   // Add in truncation fields for description.
   $truncation_config = array(
@@ -320,6 +329,9 @@ function islandora_solr_metadata_config_form_validate($form, $form_state) {
 function islandora_solr_metadata_config_form_submit($form, $form_state) {
   module_load_include('inc', 'islandora_solr_metadata', 'includes/db');
   $configuration_id = $form_state['values']['islandora_solr_metadata_configuration_id'];
+
+  $collapse = $form_state['values']['islandora_solr_metadata_collapse_' . $configuration_id];
+  variable_set('islandora_solr_metadata_collapse_' . $configuration_id, $collapse);
 
   if ($form_state['clicked_button']['#value'] == 'Save configuration') {
     // Grab existing entries first for comparison.
