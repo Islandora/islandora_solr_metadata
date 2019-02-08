@@ -264,7 +264,7 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
               ));
             }
           }
-          if (islandora_solr_is_date_field($solr_field) && !empty($solr_fields[$solr_field]['date_format'])) {
+          if (!empty($solr_fields[$solr_field]['date_format']) && islandora_solr_is_date_field($solr_field)) {
             $value = format_date(strtotime($value), 'custom', $solr_fields[$solr_field]['date_format'], 'UTC');
           }
           if (is_callable($field_config['formatter'])) {
