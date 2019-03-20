@@ -80,6 +80,24 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
   }
   $variables['separator'] = $separator;
   $variables['parent_collections'] = islandora_get_parents_from_rels_ext($object);
+  islandora_solr_metadata_add_theme_hook_suggestions($variables, 'islandora_solr_metadata_display');
+}
+
+/**
+ * Helper function to add theme hook suggestions.
+ */
+function islandora_solr_metadata_add_theme_hook_suggestions(array &$variables, $base) {
+  $object = $variables['islandora_object'];
+  if (count($object->models) > 0) {
+    $models = array();
+    foreach ($object->models as $model) {
+      if ($model === 'fedora-system:FedoraObject-3.0') {
+        continue;
+      }
+      $models[] = preg_replace('/[^a-z0-9-]+/', '-', strtolower($model));
+    }
+    $variables['theme_hook_suggestions'] += theme_get_suggestions($models, $base);
+  }
 }
 
 /**
@@ -130,6 +148,7 @@ function template_preprocess_islandora_solr_metadata_description(array &$variabl
     $separator = "\n";
   }
   $variables['separator'] = $separator;
+  islandora_solr_metadata_add_theme_hook_suggestions($variables, 'islandora_solr_metadata_description');
 }
 
 /**
