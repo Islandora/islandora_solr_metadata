@@ -54,6 +54,7 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
   module_load_include('inc', 'islandora', 'includes/utilities');
   drupal_add_js('misc/form.js');
   drupal_add_js('misc/collapse.js');
+  drupal_add_js(drupal_get_path('module', 'islandora_solr_metadata') . 'js/collapse.js');
 
   $object = $variables['islandora_object'];
   $db_fields = array();
@@ -63,7 +64,13 @@ function template_preprocess_islandora_solr_metadata_display(array &$variables) 
   foreach ($associations as $configuration_id) {
     $field = islandora_solr_metadata_get_fields($configuration_id['configuration_id']);
     $db_fields = array_merge($db_fields, $field);
+
+    // Add this variable here because we will not no the configuration_id in the template
+    $collapse_default = variable_get('islandora_solr_metadata_collapse_' 
+      . $configuration_id['configuration_id'], 1);
   }
+  $variables['not_collapsed'] = $collapse_default;
+
   foreach ($db_fields as $solr_field => $value) {
     if (isset($solr_fields[$solr_field])) {
       continue;
