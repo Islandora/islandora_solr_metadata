@@ -349,10 +349,12 @@ function islandora_solr_metadata_query_fields($object, &$solr_fields) {
         // Apply rules configurations for this field as configured
         // on the metadata configuration page. Unset the field from
         // the $solr_fields array to prevent it from being shown.
-        $permission = drupal_array_get_nested_value($field, array('permissions'));
-        if ($permission['enable_permissions'] && !array_intersect(array_keys($user->roles), $permission['permissions'])) {
-          // Permissions are being enforced and none of our roles are allowed...
-          unset($solr_fields[$field['solr_field']]);
+	$permission = drupal_array_get_nested_value($field, array('permissions'));
+	if (isset($permission['permissions'])) {
+          if ($permission['enable_permissions'] && !array_intersect(array_keys($user->roles), $permission['permissions'])) {
+            // Permissions are being enforced and none of our roles are allowed...
+            unset($solr_fields[$field['solr_field']]);
+          }
         }
       }
 
