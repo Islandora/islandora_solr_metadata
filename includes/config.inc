@@ -222,11 +222,11 @@ function islandora_solr_metadata_config_form($form, &$form_state, $configuration
   // Add in truncation fields for description.
   $truncation_config = array(
     'default_values' => array(
-      'truncation_type' => $description['description_data']['truncation']['truncation_type'] ? $description['description_data']['truncation']['truncation_type'] : 'separate_value_option',
-      'max_length' => $description['description_data']['truncation']['max_length'] ? $description['description_data']['truncation']['max_length'] : 0,
-      'word_safe' => $description['description_data']['truncation']['word_safe'] ? $description['description_data']['truncation']['word_safe'] : FALSE,
-      'ellipsis' => $description['description_data']['truncation']['ellipsis'] ? $description['description_data']['truncation']['ellipsis'] : FALSE,
-      'min_wordsafe_length' => $description['description_data']['truncation']['min_wordsafe_length'] ? $description['description_data']['truncation']['min_wordsafe_length'] : 1,
+      'truncation_type' => isset($description['description_data']['truncation']['truncation_type']) ? $description['description_data']['truncation']['truncation_type'] : 'separate_value_option',
+      'max_length' => isset($description['description_data']['truncation']['max_length']) ? $description['description_data']['truncation']['max_length'] : 0,
+      'word_safe' => isset($description['description_data']['truncation']['word_safe']) ? $description['description_data']['truncation']['word_safe'] : FALSE,
+      'ellipsis' => isset($description['description_data']['truncation']['ellipsis']) ? $description['description_data']['truncation']['ellipsis'] : FALSE,
+      'min_wordsafe_length' => isset($description['description_data']['truncation']['min_wordsafe_length']) ? $description['description_data']['truncation']['min_wordsafe_length'] : 1,
     ),
     'min_wordsafe_length_input_path' => "islandora_solr_metadata_fields[description_fieldset][truncation][word_safe]",
   );
